@@ -1,0 +1,21 @@
+DEBUG = true
+
+
+-- Balloon
+BALLOON_RADIUS = 100
+
+
+-- Bubble
+BUBBLE_RADIUS = 50 
+DELAY_FACTOR = 15  -- lower is slower
+BUBBLE_WEIGHT = 1
+
+-- Background
+BG_CHANGE_SPEED = .999
+BG_CHANGE_UPDATE_RATE = 4000 --ms
+-- Obstacles
+OBS_FALL_SPEED = 2
+OBS_SLEEP_SPEED = 2
+
+-- Game
+END_TRANSITION_DURATION = 1000 --ms
