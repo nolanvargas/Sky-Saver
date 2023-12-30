@@ -9,7 +9,7 @@ local physics = require "physics"
 -- import constants
 require("utils.constants")
 require("utils.utils")
-local generateNewLevel = require("gamelogic.levelGenerator")
+require("gamelogic.levelGenerator")
 
 
 local scene = composer.newScene()
@@ -150,11 +150,6 @@ end
 -- Apply forces on collision with obstacles
 local function onCollision(event)
 
-    local function activateObject(object)
-        object.activated = true
-        object.gravityScale = OBS_FALL_SPEED
-    end
-
     -- collided objects
     local co = { event.object1, event.object2 }
 
@@ -169,7 +164,7 @@ local function onCollision(event)
     if ((co[1].class == "balloon") and (co[2].class == "obs") or
     (co[2].class == "balloon") and (co[1].class == "obs")) then
         if endGame == false then flash() end
-        --endGame = true
+        endGame = true
     end
 end
 
@@ -178,7 +173,7 @@ local function obstacleCleanUp()
     for i = 1, #obstacles do
         local obs = obstacles[i]
         if obs then
-            if ((obs.x < -100) or (obs.x > screenW + 100) or (obs.y > screenH + 100)) then
+            if ((obs.x < -500) or (obs.x > screenW + 500) or (obs.y > screenH + 500)) then
                 table.remove(obstacles, i)
                 obs:removeSelf()
             end
@@ -186,11 +181,16 @@ local function obstacleCleanUp()
     end
 end
 
-local function moveSleepers() 
+local function checkObs() 
     for i = 1, #obstacles do
         local obs = obstacles[i]
-        if obs.activated == false then
-            obs.y = obs.y + OBS_SLEEP_SPEED * endGameTimeScale
+        if obs.activationY then 
+            if obs.y >= obs.activationY and not obs.activated then
+                activateObject(obs)
+                if obs.activationDX and obs.activationDY then
+                    obs:applyLinearImpulse(obs.activationDX, obs.activationDY, obs.x, obs.y)
+                end
+            end
         end
     end
 end
@@ -199,7 +199,7 @@ local function update(event)
     if not gameOver then
         followbubbleTarget() -- Start following the bubbleTarget with delay
         obstacleCleanUp()
-        moveSleepers()
+        checkObs()
     end
     if endGame then
         slowPhysics()
@@ -233,6 +233,8 @@ function scene:create( event )
     bubbleTarget.isVisible = DEBUG
     if DEBUG then
         physics.setDrawMode("hybrid")
+        local c = display.newCircle(halfW, halfH, 10)
+        c:setFillColor(1,0,0)
     end
     
     -- Add physics 
@@ -245,8 +247,6 @@ function scene:create( event )
     
     
     -- Add to scene
-    local c = display.newCircle(halfW, halfH, 10)
-    c:setFillColor(1,0,0)
     foreground:insert(balloon)
     foreground:insert(bubble) 
     foreground:insert(bubbleTarget)
@@ -261,8 +261,8 @@ function scene:show( event )
     if phase == "will" then
         -- Called when the scene is still off screen and is about to move on screen
     elseif phase == "did" then
-        timer.performWithDelay( 1100, function ()
-            obstacles = generateNewLevel("3")
+        timer.performWithDelay( 2000, function ()
+            obstacles = generateNewLevel("1")
         end, -1 )
         backgroundTimer = timer.performWithDelay(BG_CHANGE_UPDATE_RATE, updateBackground, -1)
         Runtime:addEventListener("enterFrame", update)
