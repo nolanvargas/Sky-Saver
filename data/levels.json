@@ -7,48 +7,48 @@
         "y": -300
       },
       "2": {
-        "shapeID": 2,
+        "shapeID": 1,
         "x": 80,
         "y": -300
       },
       "3": {
-        "shapeID": 3,
+        "shapeID": 1,
         "x": 160,
         "y": -300
       },
       "4": {
-        "shapeID": 4,
+        "shapeID": 1,
         "x": 240,
         "y": -300
       },
          "5": {
-           "shapeID": 5,
+           "shapeID": 1,
            "x": 320,
            "y": -300,
            "omega": 180
          },
          "6": {
-            "shapeID": 5,
+            "shapeID": 1,
             "x": 400,
             "y": -300
           },
          "7": {
-            "shapeID": 5,
+            "shapeID": 1,
             "x": 480,
             "y": -300
           },
          "8": {
-            "shapeID": 5,
+            "shapeID": 1,
             "x": 560,
             "y": -300
           },
          "9": {
-            "shapeID": 5,
+            "shapeID": 1,
             "x": 640,
             "y": -300
           },
          "10": {
-            "shapeID": 5,
+            "shapeID": 1,
             "x": 720,
             "y": -300
           }
