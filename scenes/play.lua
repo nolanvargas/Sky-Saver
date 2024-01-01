@@ -202,7 +202,6 @@ local function update(event)
     if not gameOver then
         followbubbleTarget() -- Start following the bubbleTarget with delay
         obstacleCleanUp()
-        --moveObs()
         checkObs()
     end
     if endGame then
@@ -285,7 +284,7 @@ function scene:show( event )
     if phase == "will" then
         -- Called when the scene is still off screen and is about to move on screen
     elseif phase == "did" then
-        timer.performWithDelay( 2000, function ()
+        timer.performWithDelay( 1300, function ()
             obstacles = generateNewLevel("1")
         end, -1 )
         backgroundTimer = timer.performWithDelay(BG_CHANGE_UPDATE_RATE, updateBackground, -1)
