@@ -1,0 +1,45 @@
+game modes:
+classic loop of classic levels at random
+increasing level difficulty who can get the farthest
+power ups mode with slow motion, shield, score multipler(hold the bubble in a zone to activate), maybe a buuble size boost, and invincibility(maybe a powerup that lets you tilt your phone to control gravity), powerup that makes obstacles brittle and they break on collision or makes the bubble instantly responsive and powerful, force field around the balloon that pushes away obstacles, gust of wind that pushes obstacles sidways
+mode where there are multiple balloons
+boss mode
+live multiplayer mode where 8 people choose a level to add to the course and then the course is played and each time a player dies then the round is restarted until there is one winner
+daily challenge
+iron balloon mode where the baloon has a health bar and hurts from the force of obstacle collisions
+special obstacle that takes a certain amount of force to break and gives rewards
+colored obstacle that only interacts with other obatacles and not the plaber bubble
+objects with no gravity
+
+customizations:
+balloon:
+space theme where the background is a static image of stars
+horizontal static bars
+collors
+gradients
+pixelated
+rainbow
+steampunk
+flowers
+electrical
+neon
+chineese
+crystal
+aurora boraeaslis
+grafiti
+camo
+canvas
+
+bubble:
+bubblgum
+
+leaderboard:
+weekly stops at a level and then you can shoot for leaderboard position
+
+
+
+
+
+
+
+
