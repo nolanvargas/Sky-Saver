@@ -19,6 +19,7 @@ local scene = composer.newScene()
 -- -----------------------------------------------------------------------------------
 
 -- for quick reference
+local contentW, contentH = display.contentWidth, display.contentHeight
 local screenW, screenH, halfW, halfH = display.actualContentWidth, display.actualContentHeight, display.contentCenterX, display.contentCenterY
 -- game elements
 local bubble, bubbleTarget
@@ -41,6 +42,7 @@ local lastFrameTime = os.time()
 local endGame = false   
 local gameOver = false
 local endGameTimeScale = 1
+local prevFrame
 
 
 -- -----------------------------------------------------------------------------------
@@ -134,8 +136,8 @@ local function movebubbleTarget(event)
         touchPreviousY = event.y
     end
     if event.phase == "moved" then
-        local changeX = touchPreviousX - event.x
-        local changeY = touchPreviousY - event.y
+        local changeX = (touchPreviousX - event.x) * BUBBLE_INPUT_SCALAR
+        local changeY = (touchPreviousY - event.y) * BUBBLE_INPUT_SCALAR
         bubbleTarget.x = bubbleTarget.x - changeX
         bubbleTarget.y = bubbleTarget.y - changeY
         touchPreviousX = event.x
@@ -173,7 +175,8 @@ local function obstacleCleanUp()
     for i = 1, #obstacles do
         local obs = obstacles[i]
         if obs then
-            if ((obs.x < -500) or (obs.x > screenW + 500) or (obs.y > screenH + 500)) then
+            local b = math.max(obs.width, obs.height)
+            if ((obs.x < -b) or (obs.x > screenW + b) or (obs.y > screenH + b)) then
                 table.remove(obstacles, i)
                 obs:removeSelf()
             end
@@ -199,6 +202,7 @@ local function update(event)
     if not gameOver then
         followbubbleTarget() -- Start following the bubbleTarget with delay
         obstacleCleanUp()
+        --moveObs()
         checkObs()
     end
     if endGame then
@@ -218,14 +222,16 @@ function scene:create( event )
     local sceneGroup = self.view
     physics.start()
     physics.pause()
-    
+
+
     background = display.newRect(halfW, halfH, screenW, screenH)
     background:setFillColor(paint)
     nearBackground:insert(background)
     
-    balloon = display.newCircle( halfW, screenH-200, BALLOON_RADIUS )
+    balloon = display.newCircle( halfW, (contentH-BALLOON_HEIGHT), BALLOON_RADIUS )
     balloon.class = "balloon"
-    bubble = display.newCircle(halfW, screenH - 250, BUBBLE_RADIUS)
+    print("Height: ", screenH*BALLOON_HEIGHT)
+    bubble = display.newCircle(halfW, screenH - 450, BUBBLE_RADIUS)
     bubble.class = "bubble"
     -- invisible bubbleTarget that the bubble follows
     bubbleTarget = display.newCircle(display.contentCenterX, display.contentCenterY+400, 5)
@@ -233,8 +239,26 @@ function scene:create( event )
     bubbleTarget.isVisible = DEBUG
     if DEBUG then
         physics.setDrawMode("hybrid")
-        local c = display.newCircle(halfW, halfH, 10)
+        local c = display.newCircle(halfW, halfH, 5)
         c:setFillColor(1,0,0)
+
+        -- actualContent
+        local o = display.newRect(halfW,halfH,display.actualContentWidth, display.actualContentHeight)
+        o:setFillColor(0,0,0,0)
+        o:setStrokeColor(1,0,0)
+        o.strokeWidth = 10
+
+        --content
+        local o = display.newRect(halfW,halfH,display.contentWidth, display.contentHeight)
+        o:setFillColor(0,0,0,0)
+        o:setStrokeColor(0,1,0)
+        o.strokeWidth = 10
+
+        --viewableContent
+        local o = display.newRect(halfW,halfH,display.safeActualContentWidth, display.safeActualContentHeight)
+        o:setFillColor(0,0,0,0)
+        o:setStrokeColor(0,0,1)
+        o.strokeWidth = 10
     end
     
     -- Add physics 

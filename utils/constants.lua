@@ -3,12 +3,14 @@ DEBUG = true
 
 -- Balloon
 BALLOON_RADIUS = 100
+BALLOON_HEIGHT = 100 --pixels above bottom of screen
 
 
 -- Bubble
 BUBBLE_RADIUS = 50 
 DELAY_FACTOR = 15  -- lower is slower
 BUBBLE_WEIGHT = 1
+BUBBLE_INPUT_SCALAR = 1.3
 
 -- Background
 BG_CHANGE_SPEED = .999

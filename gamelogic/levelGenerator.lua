@@ -92,12 +92,14 @@ function generateNewLevel(levelNumber)
         output.activationDX = obs["activationDX"]
         output.activationDY = obs["activationDY"]
 
-        if obs["omega"] then output:applyTorque(obs["omega"]*10) end
+        if obs["omega"] then 
+            print("tourqing")
+            output:applyTorque(obs["omega"]*10) end
         output.gravity = obs["gravity"] or true
         if not obs["activated"] then
             output.activated = false -- not free falling
             output.gravityScale = 0
-            output:applyLinearImpulse( 0, OBS_SLEEP_SPEED, obs["x"], obs["y"] )
+            output:setLinearVelocity( 0, OBS_SLEEP_SPEED )
         else
             output.activated = true
             output.gravityScale = OBS_FALL_SPEED
