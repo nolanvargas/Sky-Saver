@@ -229,7 +229,7 @@ function scene:create( event )
     
     balloon = display.newCircle( halfW, (contentH-BALLOON_HEIGHT), BALLOON_RADIUS )
     balloon.class = "balloon"
-    print("Height: ", screenH*BALLOON_HEIGHT)
+    balloon:setFillColor(0,0.6,0.9)
     bubble = display.newCircle(halfW, screenH - 450, BUBBLE_RADIUS)
     bubble.class = "bubble"
     -- invisible bubbleTarget that the bubble follows
@@ -284,7 +284,7 @@ function scene:show( event )
     if phase == "will" then
         -- Called when the scene is still off screen and is about to move on screen
     elseif phase == "did" then
-        timer.performWithDelay( 1300, function ()
+        timer.performWithDelay( 1000, function ()
             obstacles = generateNewLevel("1")
         end, -1 )
         backgroundTimer = timer.performWithDelay(BG_CHANGE_UPDATE_RATE, updateBackground, -1)

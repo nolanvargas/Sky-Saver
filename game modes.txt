@@ -10,6 +10,8 @@ iron balloon mode where the baloon has a health bar and hurts from the force of 
 special obstacle that takes a certain amount of force to break and gives rewards
 colored obstacle that only interacts with other obatacles and not the plaber bubble
 objects with no gravity
+obstacles that shoot towards the balloon
+mode where you move the baloon on the x or both axis to dodge obstacles
 
 customizations:
 balloon:

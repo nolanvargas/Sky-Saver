@@ -5,8 +5,8 @@ y: required
 activated: not required of shape is static, determines if shape will free fall on spawn
 activationY: optional, when an unactivated shape will activate
 activationX: optional, when the uncativated shape will activate (if there is not already x velocity then this will not apply)
-dx: required if activated is true or has activationY
-dy: required if activated is true or has activationY
+activationDX: required if activated is true or has activationY
+activationDY: required if activated is true or has activationY
 static: optional, default is false meaning it will be a moveable object
 density: optional, default is regular, light, regular, heavy
 friction: optional, default is regular, less, regular, more

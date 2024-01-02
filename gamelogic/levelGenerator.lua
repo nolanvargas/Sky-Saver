@@ -93,16 +93,15 @@ function generateNewLevel(levelNumber)
         output.activationDY = obs["activationDY"]
 
         if obs["omega"] then 
-            print("tourqing")
             output:applyTorque(obs["omega"]*10) end
-        output.gravity = obs["gravity"] or true
+        if obs["gravity"] == false then output.gravity = false else output.gravity = true end
         if not obs["activated"] then
             output.activated = false -- not free falling
-            output.gravityScale = 0
-            output:setLinearVelocity( 0, OBS_SLEEP_SPEED )
+            output.gravityScale = 0 -- also not free falling
+            output:setLinearVelocity( 0, OBS_SLEEP_SPEED ) -- kick it downwards
         else
-            output.activated = true
-            output.gravityScale = OBS_FALL_SPEED
+            output.activated = true -- is activated
+            output.gravityScale = OBS_FALL_SPEED -- free falling
         end
         table.insert(level, output)
         i = i + 1
@@ -116,6 +115,8 @@ function activateObject(object)
     if not object.activated then
         object.angularVelocity = object.activationOmega or object.angularVelocity
         object.activated = true
-        if object.gravity then object.gravityScale = OBS_FALL_SPEED end
+        if object.gravity then
+            print("activating gravity") 
+            object.gravityScale = OBS_FALL_SPEED end
     end
 end

@@ -1,24 +1,24 @@
-DEBUG = true
+DEBUG = false
 
 
 -- Balloon
-BALLOON_RADIUS = 100
-BALLOON_HEIGHT = 100 --pixels above bottom of screen
+BALLOON_RADIUS = 50
+BALLOON_HEIGHT = 100 --pixels above bottom of content area
 
 
 -- Bubble
-BUBBLE_RADIUS = 50 
+BUBBLE_RADIUS = 35
 DELAY_FACTOR = 15  -- lower is slower
 BUBBLE_WEIGHT = 1
 BUBBLE_INPUT_SCALAR = 1.3
 
 -- Background
 BG_CHANGE_SPEED = .999
-BG_CHANGE_UPDATE_RATE = 4000 --ms
+BG_CHANGE_UPDATE_RATE = 3000 --ms
 
 -- Obstacles
 OBS_FALL_SPEED = 2
-OBS_SLEEP_SPEED = 70
+OBS_SLEEP_SPEED = 100
 OBS_REGULAR_DENSITY = 5
 OBS_LIGHT_DENSITY = 2
 OBS_HEAVY_DENSITY = 10
