@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "279876804020",
+    "project_id": "sky-saver-4a20e",
+    "storage_bucket": "sky-saver-4a20e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279876804020:android:49190059b09795b30de6e1",
+        "android_client_info": {
+          "package_name": "com.solar2d.app.Sky_Saver"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-9Uyy101Sa-o_grkLTACfUzxD4pYddEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

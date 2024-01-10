@@ -19,6 +19,8 @@ local scene = composer.newScene()
 -- -----------------------------------------------------------------------------------
 
 -- for quick reference
+local marginX = (display.pixelWidth - display.actualContentWidth) / 2
+local marginY = (display.contentHeight - display.safeActualContentHeight)
 local contentW, contentH = display.contentWidth, display.contentHeight
 local screenW, screenH, halfW, halfH = display.actualContentWidth, display.actualContentHeight, display.contentCenterX, display.contentCenterY
 -- game elements
@@ -43,6 +45,25 @@ local endGame = false
 local gameOver = false
 local endGameTimeScale = 1
 local prevFrame
+local score = 0
+local scoreText
+
+local function reset()
+    backgroundTop = { 0/255, 140/255, 160/255, 1}
+    backgroundBot = { 0/255, 185/255, 210/255, 1}
+    paint = {
+        type = "gradient",
+        color1 = backgroundBot,
+        color2 = backgroundTop,
+        direction = "up"
+    }
+    -- logic
+    endGameElapsedTime = 0
+    lastFrameTime = os.time()
+    endGame = false   
+    gameOver = false
+    endGameTimeScale = 1
+end
 
 
 -- -----------------------------------------------------------------------------------
@@ -166,6 +187,7 @@ local function onCollision(event)
     if ((co[1].class == "balloon") and (co[2].class == "obs") or
     (co[2].class == "balloon") and (co[1].class == "obs")) then
         if endGame == false then flash() end
+        timer.cancelAll()
         endGame = true
     end
 end
@@ -176,7 +198,7 @@ local function obstacleCleanUp()
         local obs = obstacles[i]
         if obs then
             local b = math.max(obs.width, obs.height)
-            if ((obs.x < -b) or (obs.x > screenW + b) or (obs.y > screenH + b)) then
+            if ((obs.x < -marginX-b) or (obs.x > screenW + b) or (obs.y > screenH + b)) then
                 table.remove(obstacles, i)
                 obs:removeSelf()
             end
@@ -190,10 +212,19 @@ local function checkObs()
         if obs.activationY then 
             if obs.y >= obs.activationY and not obs.activated then
                 activateObject(obs)
-                if obs.activationDX and obs.activationDY then
-                    obs:applyLinearImpulse(obs.activationDX, obs.activationDY, obs.x, obs.y)
+                if obs.activationDX or obs.activationDY then
+                    obs:applyLinearImpulse(obs.activationDX or 0, obs.activationDY or 0, obs.x, obs.y)
                 end
             end
+        end
+    end
+end
+
+local function moveStatics()
+    for i = 1, #obstacles do
+        local obs = obstacles[i]
+        if obs.bodyType == "static" then
+            obs.y = obs.y + OBS_SLEEP_SPEED/60 * endGameTimeScale
         end
     end
 end
@@ -203,10 +234,19 @@ local function update(event)
         followbubbleTarget() -- Start following the bubbleTarget with delay
         obstacleCleanUp()
         checkObs()
+        moveStatics()
+    end
+    if not endGame then
+        score = score + 0.05
+        scoreText.text = math.floor(score)
+        
     end
     if endGame then
         slowPhysics()
-        timer.cancelAll()
+    end
+    if gameOver then
+        writeScore(math.floor(score))
+        composer.gotoScene( "scenes.menu", {params = {score = score}} )
     end
 end
 
@@ -220,22 +260,29 @@ end
 function scene:create( event )    
     local sceneGroup = self.view
     physics.start()
+    physics.setTimeScale(1) -- Update physics time scale
     physics.pause()
 
-
+    scoreText = display.newText( math.floor(score), 50, marginY +300, native.systemFont, 60 )
     background = display.newRect(halfW, halfH, screenW, screenH)
     background:setFillColor(paint)
     nearBackground:insert(background)
     
     balloon = display.newCircle( halfW, (contentH-BALLOON_HEIGHT), BALLOON_RADIUS )
     balloon.class = "balloon"
-    balloon:setFillColor(0,0.6,0.9)
-    bubble = display.newCircle(halfW, screenH - 450, BUBBLE_RADIUS)
+    balloon:setFillColor(1,0,0.9)
+    -- dont know why its radius *2 but it works
+    bubble = display.newImageRect( "assets/bubble-full.png", BUBBLE_RADIUS*2, BUBBLE_RADIUS*2 )
     bubble.class = "bubble"
+    bubble.x = halfW
+    bubble.y = halfH+300
+    
     -- invisible bubbleTarget that the bubble follows
-    bubbleTarget = display.newCircle(display.contentCenterX, display.contentCenterY+400, 5)
+    bubbleTarget = display.newCircle(halfW, halfH+300, 5)
     bubbleTarget:setFillColor(255,0,0,1);
     bubbleTarget.isVisible = DEBUG
+
+
     if DEBUG then
         physics.setDrawMode("hybrid")
         local c = display.newCircle(halfW, halfH, 5)
@@ -266,9 +313,6 @@ function scene:create( event )
     bubble.isFixedRotation = true
     bubble.gravityScale = 0
     
-    -- add event listeners
-    
-    
     -- Add to scene
     foreground:insert(balloon)
     foreground:insert(bubble) 
@@ -284,8 +328,10 @@ function scene:show( event )
     if phase == "will" then
         -- Called when the scene is still off screen and is about to move on screen
     elseif phase == "did" then
-        timer.performWithDelay( 1000, function ()
-            obstacles = generateNewLevel("1")
+        obstacles = generateNewLevel("2", marginY)
+
+        timer.performWithDelay( 10000, function ()
+            obstacles = generateNewLevel("1", marginY)
         end, -1 )
         backgroundTimer = timer.performWithDelay(BG_CHANGE_UPDATE_RATE, updateBackground, -1)
         Runtime:addEventListener("enterFrame", update)
@@ -297,6 +343,29 @@ function scene:show( event )
     end
 end
 
+function scene:hide(event)
+    if event.phase == "did" then
+        background:removeSelf()
+        bubble:removeSelf();
+        bubbleTarget:removeSelf()
+        balloon:removeSelf()
+        scoreText:removeSelf()
+        for i = 1, #obstacles do
+            obstacles[i]:removeSelf()
+        end
+        for i = #obstacles,1,-1 do
+            table.remove(obstacles,i)
+        end
+
+        Runtime:removeEventListener("collision", onCollision)
+        Runtime:removeEventListener("touch", movebubbleTarget)
+        Runtime:removeEventListener("enterFrame", update)
+        Runtime:removeEventListener("enterFrame")
+        composer.removeScene("scenes.play")
+        --reset()
+    end
+end
+
 
 -- -----------------------------------------------------------------------------------
 -- Listeners Setup
@@ -304,6 +373,7 @@ end
 
 scene:addEventListener( "create", scene )
 scene:addEventListener( "show", scene )
+scene:addEventListener( "hide", scene )
 Runtime:addEventListener("collision", onCollision)
 Runtime:addEventListener("touch", movebubbleTarget)
 

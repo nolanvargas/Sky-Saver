@@ -18,9 +18,7 @@ settings =
 	--
 	android =
 	{
-		usesPermissions =
-		{
-		},
+		useGoogleServicesJson = true, -- Needed for Android
 	},
 
 	--
@@ -39,10 +37,13 @@ settings =
 	--
 	-- Plugins section
 	--
-	plugins =
-	{
-
-	},
+	plugins = {
+		--["plugin.firebaseAnalytics"] =
+		--{
+		--	publisherId="tech.scotth",
+		--	marketplaceId = "8gfyr9"
+		--}
+	},      	
 
 	--
 	-- Project section

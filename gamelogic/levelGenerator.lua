@@ -2,17 +2,13 @@ local json = require("json")
 local physics = require "physics"
 require("utils.constants")
 
--- density, bounce, friction
+-- density, friction
 local function optionsToValues(options)
     local density
-    local bounce
     local friction
     if options[0] == "light" then density = OBS_LIGHT_DENSITY
     elseif options[0] == "heavy" then density = OBS_HEAVY_DENSITY
     else density = OBS_REGULAR_DENSITY end
-    if options[1] == "some" then bounce = OBS_SOME_BOUNCE
-    elseif options[1] == "more" then bounce = OBS_MORE_BOUNCE
-    else bounce = OBS_NONE_BOUNCE end
     if options[2] == "less" then friction = OBS_LESS_FRICTION
     elseif options[2] == "more" then friction = OBS_MORE_FRICTION
     else friction = OBS_REGULAR_FRICTION end
@@ -51,37 +47,42 @@ else
 end
 
 level = {}
-function generateNewLevel(levelNumber)
+function generateNewLevel(levelNumber, marginY)
     local i = 1
     while levelData[levelNumber][tostring(i)] do
         local obs = levelData[levelNumber][tostring(i)]
         local shape = shapeData[tostring(obs["shapeID"])]
         local options = optionsToValues({
             obs["density"] and obs["density"] or nil,
-            obs["bounce"] and obs["bounce"] or nil,
-            obs["friction"] and obs["friction"] or nil
+            obs["friction"] and obs["friction"] or nil,
         })
         
         local output
+        local type
+
+        if obs["static"] then type = "static" else type = "dynamic" end
         if shape["shape"] == "square" then
             output = display.newRect( obs["x"], obs["y"], shape["width"], shape["height"] )
-            physics.addBody( output, "dynamic", {density=options[1], friction=options[3], bounce=options[2]} )
+            physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"]} )
         elseif shape["shape"] == "circle" then
             output = display.newCircle( obs["x"], obs["y"], shape["radius"] )
-            physics.addBody( output, "dynamic", {density=options[1], friction=options[3], bounce=options[2], radius=shape["radius"]} )
+            physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"], radius=shape["radius"]} )
         elseif shape["shape"] == "s_poly" then
             output = display.newPolygon( obs["x"], obs["y"], shape["display"] )
-            physics.addBody( output, "dynamic", {density=options[1], friction=options[3], bounce=options[2], shape=shape["physics"]} )
+            physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"], shape=shape["physics"]} )
         elseif shape["shape"] == "c_poly" then
             output = display.newPolygon( obs["x"], obs["y"], shape["display"] )
             local bodyShapes = {}
             for i = 1, #shape["physics"] do
-                bodyShapes[i] = { shape = shape["physics"][i], density=options[1], friction=options[3], bounce=options[2] }
+                bodyShapes[i] = { shape = shape["physics"][i], density=options[1], friction=options[3], bounce=obs["bounce"]}
             end
-            physics.addBody(output, unpack(bodyShapes))
+            physics.addBody(output, type, unpack(bodyShapes) )
         end
     
         assert(output, "shape could not be created from json")
+
+        output.y = output.y + marginY - 200
+        if obs["rotation"] then output.rotation = obs["rotation"] end
 
         -- add properties to the object
         output.omega = obs["omega"]
@@ -91,6 +92,7 @@ function generateNewLevel(levelNumber)
         output.isFixedRotation = obs["fixedRotation"]
         output.activationDX = obs["activationDX"]
         output.activationDY = obs["activationDY"]
+        if obs["static"] then output:setFillColor(0,0,0) end
 
         if obs["omega"] then 
             output:applyTorque(obs["omega"]*10) end
@@ -116,7 +118,6 @@ function activateObject(object)
         object.angularVelocity = object.activationOmega or object.angularVelocity
         object.activated = true
         if object.gravity then
-            print("activating gravity") 
             object.gravityScale = OBS_FALL_SPEED end
     end
 end

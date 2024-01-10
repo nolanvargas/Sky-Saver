@@ -10,11 +10,12 @@ activationDY: required if activated is true or has activationY
 static: optional, default is false meaning it will be a moveable object
 density: optional, default is regular, light, regular, heavy
 friction: optional, default is regular, less, regular, more
-bounce: optional, default is none, none, some, more
+bounce: optional, default is 0
 fixedRotation: optional, default is false
 gravity: optional, default is true, determines if gravity applies to shape
 omega: optional, default is 0, the rotational velocity (bigger shapes need more rotational force) (The shorthand notation for angular velocity is the Greek letter omega (ω))
 activationOmega: optional, the angular velocity at activation
+rotation: optional, rotation of the shape at spawn
 
 
 
