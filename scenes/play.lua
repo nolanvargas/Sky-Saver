@@ -2,6 +2,11 @@
 -- Imports
 -- -----------------------------------------------------------------------------------
 
+
+local firebaseAnalytics = require "plugin.firebaseAnalytics"
+firebaseAnalytics.init()
+firebaseAnalytics.logEvent("test",{test = "hello world"})
+
 -- import composer
 local composer = require( "composer" )
 -- include Corona's "physics" library
@@ -172,9 +177,29 @@ end
 
 -- Apply forces on collision with obstacles
 local function onCollision(event)
-
+    
     -- collided objects
     local co = { event.object1, event.object2 }
+
+    if PLAYER_HAPTICS then
+        if co[1].class == "bubble" or co[2].class == "bubble" then
+            if co[1].class == "bubble" then
+                if co[2].hapticCooldown == 0 then
+                    print("buzz")
+                    system.vibrate("impact", "light") 
+                    co[2].hapticCooldown = HAPTIC_COOLDOWN
+
+                end
+            elseif co[2].class == "bubble" then
+                if co[1].hapticCooldown == 0 then
+                    print("buzz")
+
+                    system.vibrate("impact", "light") 
+                    co[1].hapticCooldown = HAPTIC_COOLDOWN
+                end
+            end
+        end
+    end
 
     -- activate obstacles
     for _, object in ipairs(co) do
@@ -220,6 +245,18 @@ local function checkObs()
     end
 end
 
+local function updateObs() 
+    for i = 1, #obstacles do
+        local obs = obstacles[i]
+        if obs.hapticCooldown > 0 then obs.hapticCooldown = obs.hapticCooldown - 1
+        elseif obs.hapticCooldown < 0 then obs.hapticCooldown = 0
+        end
+    end
+    if balloon.hapticCooldown > 0 then balloon.hapticCooldown = balloon.hapticCooldown - 1
+        elseif balloon.hapticCooldown < 0 then balloon.hapticCooldown = 0
+    end
+end
+
 local function moveStatics()
     for i = 1, #obstacles do
         local obs = obstacles[i]
@@ -235,6 +272,7 @@ local function update(event)
         obstacleCleanUp()
         checkObs()
         moveStatics()
+        updateObs()
     end
     if not endGame then
         score = score + 0.05
@@ -270,6 +308,7 @@ function scene:create( event )
     
     balloon = display.newCircle( halfW, (contentH-BALLOON_HEIGHT), BALLOON_RADIUS )
     balloon.class = "balloon"
+    balloon.hapticCooldown = HAPTIC_COOLDOWN
     balloon:setFillColor(1,0,0.9)
     -- dont know why its radius *2 but it works
     bubble = display.newImageRect( "assets/bubble-full.png", BUBBLE_RADIUS*2, BUBBLE_RADIUS*2 )

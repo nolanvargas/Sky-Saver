@@ -85,6 +85,7 @@ function generateNewLevel(levelNumber, marginY)
         if obs["rotation"] then output.rotation = obs["rotation"] end
 
         -- add properties to the object
+        output.hapticCooldown = HAPTIC_COOLDOWN
         output.omega = obs["omega"]
         output.activationY = obs["activationY"]
         output.activationOmega = obs["activationOmega"]

@@ -18,9 +18,16 @@ settings =
 	--
 	android =
 	{
-		useGoogleServicesJson = true, -- Needed for Android
+		strings =
+		{
+			["google_app_id"]= "1:279876804020:android:49190059b09795b30de6e1"
+		},
+		useGoogleServicesJson = true,
+		usesPermissions =
+		{
+			"android.permission.VIBRATE",
+		},
 	},
-
 	--
 	-- iOS section
 	--
@@ -37,11 +44,15 @@ settings =
 	--
 	-- Plugins section
 	--
-	plugins = {
-		--["plugin.firebaseAnalytics"] =
+	plugins= {
+		["plugin.firebaseAnalytics"] =
+		{
+			publisherId="tech.scotth",
+			marketplaceId = "8gfyr9",
+		},
+		--["plugin.googleAnalytics.v2"] =
 		--{
-		--	publisherId="tech.scotth",
-		--	marketplaceId = "8gfyr9"
+		--	publisherId = "com.solar2d"
 		--}
 	},      	
 

@@ -1,9 +1,8 @@
 -- import composer
 local composer = require( "composer" )
 
-----local firebaseAnalytics = require "plugin.firebaseAnalytics"
-
---firebaseAnalytics.init()
+-- local googleAnalytics = require( "plugin.googleAnalytics.v2" )
+-- googleAnalytics.init( )
 
 
 -- Hide status bar

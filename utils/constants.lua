@@ -1,5 +1,6 @@
 DEBUG = false
 
+HAPTIC_COOLDOWN = 100 --frames (60/fps)  -- actually not sure
 
 -- Balloon
 BALLOON_RADIUS = 50
@@ -26,8 +27,9 @@ OBS_LESS_FRICTION = 0.2
 OBS_REGULAR_FRICTION = 0.5
 OBS_MORE_FRICTION = 0.8
 
-
-
-
 -- Game
 END_TRANSITION_DURATION = 1000 --ms
+MENU_TRANSITION_DURATION = 170 --ms
+
+--- PLAYER SETTINGS ---
+PLAYER_HAPTICS = true

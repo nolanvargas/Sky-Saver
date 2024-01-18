@@ -24,10 +24,14 @@ function writeScore(score)
     local scores= readScores()
     output = placeHighScore(score, scores)
     file = io.open(SCORES_FILE_PATH, "w+")
-    for i, s in pairs(output) do
-        file:write(s .. "\n")
+    if file then
+        for i, s in pairs(output) do
+            file:write(s .. "\n")
+        end
+        io.close(file)
+    else
+        print("Levels file not found")
     end
-    io.close(file)
 end
 
 function readScores()
@@ -45,6 +49,6 @@ function readScores()
 end
 
 function resetScores()
-    local file = io.open(SCORES_FILE_PATH "w+")
+    local file = io.open(SCORES_FILE_PATH, "w+")
     io.close(file)
 end
