@@ -47,7 +47,7 @@ else
 end
 
 level = {}
-function generateNewLevel(levelNumber, marginY)
+function generateNewLevel(levelNumber, sceneGroup)
     local i = 1
     while levelData[levelNumber][tostring(i)] do
         local obs = levelData[levelNumber][tostring(i)]
@@ -62,16 +62,16 @@ function generateNewLevel(levelNumber, marginY)
 
         if obs["static"] then type = "static" else type = "dynamic" end
         if shape["shape"] == "square" then
-            output = display.newRect( obs["x"], obs["y"], shape["width"], shape["height"] )
+            output = display.newRect(sceneGroup, obs["x"], obs["y"], shape["width"], shape["height"] )
             physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"]} )
         elseif shape["shape"] == "circle" then
-            output = display.newCircle( obs["x"], obs["y"], shape["radius"] )
+            output = display.newCircle(sceneGroup, obs["x"], obs["y"], shape["radius"] )
             physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"], radius=shape["radius"]} )
         elseif shape["shape"] == "s_poly" then
-            output = display.newPolygon( obs["x"], obs["y"], shape["display"] )
+            output = display.newPolygon(sceneGroup, obs["x"], obs["y"], shape["display"] )
             physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"], shape=shape["physics"]} )
         elseif shape["shape"] == "c_poly" then
-            output = display.newPolygon( obs["x"], obs["y"], shape["display"] )
+            output = display.newPolygon(sceneGroup, obs["x"], obs["y"], shape["display"] )
             local bodyShapes = {}
             for i = 1, #shape["physics"] do
                 bodyShapes[i] = { shape = shape["physics"][i], density=options[1], friction=options[3], bounce=obs["bounce"]}
@@ -81,7 +81,7 @@ function generateNewLevel(levelNumber, marginY)
     
         assert(output, "shape could not be created from json")
 
-        output.y = output.y + marginY - 200
+        output.y = output.y + MARGINY - 200
         if obs["rotation"] then output.rotation = obs["rotation"] end
 
         -- add properties to the object
@@ -94,6 +94,7 @@ function generateNewLevel(levelNumber, marginY)
         output.activationDX = obs["activationDX"]
         output.activationDY = obs["activationDY"]
         if obs["static"] then output:setFillColor(0,0,0) end
+        if obs["fixedRotation"] then output:setFillColor(.5,.5,.5) end
 
         if obs["omega"] then 
             output:applyTorque(obs["omega"]*10) end

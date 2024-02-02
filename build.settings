@@ -50,10 +50,11 @@ settings =
 			publisherId="tech.scotth",
 			marketplaceId = "8gfyr9",
 		},
-		--["plugin.googleAnalytics.v2"] =
-		--{
-		--	publisherId = "com.solar2d"
-		--}
+		["plugin.firestore"] =
+		{
+			publisherId="tech.scotth",
+			marketplaceId = "8gfyr9",
+		},
 	},      	
 
 	--

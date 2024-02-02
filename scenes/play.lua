@@ -3,9 +3,26 @@
 -- -----------------------------------------------------------------------------------
 
 
-local firebaseAnalytics = require "plugin.firebaseAnalytics"
-firebaseAnalytics.init()
-firebaseAnalytics.logEvent("test",{test = "hello world"})
+-- local firebaseAnalytics = require "plugin.firebaseAnalytics"
+-- firebaseAnalytics.init()
+-- firebaseAnalytics.logEvent("test",{test = "hello world"})
+
+-- local firestore = require("plugin.firestore")
+
+-- local firebaseDatabase = require "plugin.firebaseDatabase"
+-- firebaseDatabase.init()
+
+-- firebaseDatabase:setOnline(true)
+
+--firebaseDatabase.set("testData",{firstEntry = "Hello World"}, function() end)
+    
+--     (ev)
+--     if(ev.isError) then
+--         native.showAlert( "Could not Upload Data", ev.error , {"Ok"} )
+--     else
+--         native.showAlert( "Data send", "" , {"Ok"} )
+--     end
+-- end)
 
 -- import composer
 local composer = require( "composer" )
@@ -15,6 +32,8 @@ local physics = require "physics"
 require("utils.constants")
 require("utils.utils")
 require("gamelogic.levelGenerator")
+require("gamelogic.backgroundGenerator")
+require("gamelogic.rocket")
 
 
 local scene = composer.newScene()
@@ -23,23 +42,12 @@ local scene = composer.newScene()
 -- Variables
 -- -----------------------------------------------------------------------------------
 
--- for quick reference
-local marginX = (display.pixelWidth - display.actualContentWidth) / 2
-local marginY = (display.contentHeight - display.safeActualContentHeight)
-local contentW, contentH = display.contentWidth, display.contentHeight
-local screenW, screenH, halfW, halfH = display.actualContentWidth, display.actualContentHeight, display.contentCenterX, display.contentCenterY
 -- game elements
 local bubble, bubbleTarget
 local obstacles = {}
+local backgroundElements
 local background
-local backgroundTop = { 0/255, 140/255, 160/255, 1}
-local backgroundBot = { 0/255, 185/255, 210/255, 1}
-local paint = {
-    type = "gradient",
-    color1 = backgroundBot,
-    color2 = backgroundTop,
-    direction = "up"
-}
+local backgroundRGB = { 0/255, 180/255, 215/255, 1}
 local backgroundTimer
 -- logic
 local touchPreviousX, touchPreviousY
@@ -52,6 +60,16 @@ local endGameTimeScale = 1
 local prevFrame
 local score = 0
 local scoreText
+local playerSettings
+local cloudSpawn, levelSpawn
+local levelNumber = 0
+local flame, flameTimer
+local smoke = {}
+local frameNumber = 0
+local starsEnabled = false
+local darkenSky = false
+local cloudsEnabled = true
+local stars = {}
 
 local function reset()
     backgroundTop = { 0/255, 140/255, 160/255, 1}
@@ -75,10 +93,12 @@ end
 -- Display groups
 -- -----------------------------------------------------------------------------------
 
-local farBackground = display.newGroup()  
-local nearBackground = display.newGroup()  --this will overlay 'farBackground'  
-local foreground = display.newGroup()  --and this will overlay 'nearBackground'
-local front = display.newGroup()
+local space
+local sky
+local farBackground
+local nearBackground
+local foreground
+local front
 
 
 -- -----------------------------------------------------------------------------------
@@ -86,33 +106,36 @@ local front = display.newGroup()
 -- -----------------------------------------------------------------------------------
 
 local function updateBackground()
-    local topG = backgroundTop[2]
-    local topB = backgroundTop[3]
-    local botG = backgroundBot[2]
-    local botB = backgroundBot[3]
 
-    topG = math.floor((topG*BG_CHANGE_SPEED)*100)/100
-    topB = math.floor((topB*BG_CHANGE_SPEED)*100)/100
-    botG = math.floor((botG*BG_CHANGE_SPEED)*100)/100
-    botB = math.floor((botB*BG_CHANGE_SPEED)*100)/100
-
-    backgroundTop[2] = topG
-    backgroundTop[3] = topB
-    backgroundBot[2] = botG
-    backgroundBot[3] = botB
-
-    background:setFillColor(paint)
-
-    if topG == 0 and topB == 0 and botG == 0 and botB == 0 then
-        timer.cancel(backgroundTimer)
+    for i = 1, nearBackground.numChildren do
+        nearBackground[i].y = nearBackground[i].y + OBS_SLEEP_SPEED/60 * endGameTimeScale
     end
+    for i = 1, farBackground.numChildren do
+        farBackground[i].y = farBackground[i].y + ((OBS_SLEEP_SPEED/60)/4) * endGameTimeScale
+    end
+    for i = 1, space.numChildren do
+        space[i].y = space[i].y + ((OBS_SLEEP_SPEED/60)/4) * endGameTimeScale
+    end
+end
 
-    
+local function updateSky()
+    --print(frameNumber)
+    if starsEnabled then
+        local earthHalf = TIME_TO_SPACE*STAR_SPAWN_AT
+        local spaceHalf = TIME_TO_SPACE - TIME_TO_SPACE*STAR_SPAWN_AT 
+        background.alpha = 1 - (frameNumber - earthHalf) / spaceHalf
+    end
+    if darkenSky then 
+        local earthHalf = TIME_TO_SPACE*DARKEN_SKY_AT
+        local spaceHalf = TIME_TO_SPACE - TIME_TO_SPACE*DARKEN_SKY_AT 
+        local scalar =  1 - (frameNumber - earthHalf) / spaceHalf
+        background:setFillColor(backgroundRGB[1]*scalar, backgroundRGB[2]*scalar, backgroundRGB[3]*scalar)
+    end
 end
 
 local function flash()
     -- Create a white rectangle covering the screen
-    local screenCover = display.newRect(halfW, halfH, screenW, screenH)
+    local screenCover = display.newRect(HALFW, HALFH, SCREENW, SCREENH)
     screenCover:setFillColor(1) -- Set the color to white
     screenCover.alpha = 1 -- Initially visible
     front:insert(screenCover)
@@ -138,7 +161,6 @@ local function slowPhysics()
     else 
         if gameOver == false then
             gameOver = true
-            physics.stop() -- All done
         end
     end
     endGameElapsedTime = endGameElapsedTime + deltaTime
@@ -157,13 +179,13 @@ local function followbubbleTarget()
 end
 
 local function movebubbleTarget(event)
-    if event.phase == "began" then
+    if touchPreviousX == nil or touchPreviousY == nil or event.phase == "began" then
         touchPreviousX = event.x
         touchPreviousY = event.y
     end
     if event.phase == "moved" then
-        local changeX = (touchPreviousX - event.x) * BUBBLE_INPUT_SCALAR
-        local changeY = (touchPreviousY - event.y) * BUBBLE_INPUT_SCALAR
+        local changeX = (touchPreviousX - event.x) 
+        local changeY = (touchPreviousY - event.y) 
         bubbleTarget.x = bubbleTarget.x - changeX
         bubbleTarget.y = bubbleTarget.y - changeY
         touchPreviousX = event.x
@@ -185,17 +207,17 @@ local function onCollision(event)
         if co[1].class == "bubble" or co[2].class == "bubble" then
             if co[1].class == "bubble" then
                 if co[2].hapticCooldown == 0 then
-                    print("buzz")
-                    system.vibrate("impact", "light") 
-                    co[2].hapticCooldown = HAPTIC_COOLDOWN
-
+                    if playerSettings["PLAYER_HAPTICS"] then 
+                        system.vibrate("impact", "light") 
+                        co[2].hapticCooldown = HAPTIC_COOLDOWN
+                    end
                 end
             elseif co[2].class == "bubble" then
                 if co[1].hapticCooldown == 0 then
-                    print("buzz")
-
-                    system.vibrate("impact", "light") 
-                    co[1].hapticCooldown = HAPTIC_COOLDOWN
+                    if playerSettings["PLAYER_HAPTICS"] then 
+                        system.vibrate("impact", "light") 
+                        co[2].hapticCooldown = HAPTIC_COOLDOWN
+                    end
                 end
             end
         end
@@ -208,10 +230,12 @@ local function onCollision(event)
         end
     end
 
-    -- check for balloon obj collision
-    if ((co[1].class == "balloon") and (co[2].class == "obs") or
-    (co[2].class == "balloon") and (co[1].class == "obs")) then
-        if endGame == false then flash() end
+    -- check for rocket obj collision
+    if ((co[1].class == "rocket") and (co[2].class == "obs") or
+    (co[2].class == "rocket") and (co[1].class == "obs")) then
+        if endGame == false then
+                flash() 
+            end
         timer.cancelAll()
         endGame = true
     end
@@ -223,7 +247,7 @@ local function obstacleCleanUp()
         local obs = obstacles[i]
         if obs then
             local b = math.max(obs.width, obs.height)
-            if ((obs.x < -marginX-b) or (obs.x > screenW + b) or (obs.y > screenH + b)) then
+            if ((obs.x < ((-MARGINX-b)-X_BUFFER)) or (obs.x > SCREENW + b + X_BUFFER) or (obs.y > SCREENH + b)) then
                 table.remove(obstacles, i)
                 obs:removeSelf()
             end
@@ -252,8 +276,8 @@ local function updateObs()
         elseif obs.hapticCooldown < 0 then obs.hapticCooldown = 0
         end
     end
-    if balloon.hapticCooldown > 0 then balloon.hapticCooldown = balloon.hapticCooldown - 1
-        elseif balloon.hapticCooldown < 0 then balloon.hapticCooldown = 0
+    if rocket.hapticCooldown > 0 then rocket.hapticCooldown = rocket.hapticCooldown - 1
+        elseif rocket.hapticCooldown < 0 then rocket.hapticCooldown = 0
     end
 end
 
@@ -266,6 +290,25 @@ local function moveStatics()
     end
 end
 
+local function handleSmoke()
+    local smokeElement = spawnSmokeTrail(nearBackground, HALFW, HALFH+450)
+    table.insert(smoke, smokeElement)
+    checkSmoke(smoke, endGameTimeScale, frameNumber)
+end
+
+local function handleStars()
+    if math.random(1,100) < STAR_SPAWN_RATE then
+        local star = newStar(space)
+        table.insert(stars, star)
+    end
+    for i = #stars, 1, -1 do
+        if stars[i].y > SCREENH then 
+            stars[i]:removeSelf() 
+            table.remove(stars, i)
+        end
+    end
+end
+
 local function update(event)
     if not gameOver then
         followbubbleTarget() -- Start following the bubbleTarget with delay
@@ -273,6 +316,19 @@ local function update(event)
         checkObs()
         moveStatics()
         updateObs()
+        updateBackground()
+        handleSmoke()
+        handleStars()
+        updateSky()
+        frameNumber = frameNumber + 1
+
+        if frameNumber/TIME_TO_SPACE > STAR_SPAWN_AT then
+            starsEnabled = true
+        end
+        if frameNumber/TIME_TO_SPACE > DARKEN_SKY_AT then
+            timer.cancel(cloudSpawn)
+            darkenSky = true
+        end
     end
     if not endGame then
         score = score + 0.05
@@ -300,62 +356,104 @@ function scene:create( event )
     physics.start()
     physics.setTimeScale(1) -- Update physics time scale
     physics.pause()
+    playerSettings = getSettings()
 
-    scoreText = display.newText( math.floor(score), 50, marginY +300, native.systemFont, 60 )
-    background = display.newRect(halfW, halfH, screenW, screenH)
-    background:setFillColor(paint)
-    nearBackground:insert(background)
-    
-    balloon = display.newCircle( halfW, (contentH-BALLOON_HEIGHT), BALLOON_RADIUS )
-    balloon.class = "balloon"
-    balloon.hapticCooldown = HAPTIC_COOLDOWN
-    balloon:setFillColor(1,0,0.9)
+    space = display.newGroup()
+    sky = display.newGroup()
+    farBackground = display.newGroup()  
+    nearBackground = display.newGroup()  --this will overlay 'farBackground'  
+    foreground = display.newGroup()  --and this will overlay 'nearBackground'
+    front = display.newGroup()
+
+    scoreText = display.newText( math.floor(score), 50, MARGINY +300, native.systemFont, 60 )
+    front:insert(scoreText)
+
+    background = display.newRect(HALFW, HALFH, SCREENW, SCREENH)
+    background:setFillColor(backgroundRGB[1], backgroundRGB[2], backgroundRGB[3], 1)
+    sky:insert(background)
+
+    rocket = display.newImageRect( "assets/rocket.png", ROCKET_WIDTH*.75, ROCKET_WIDTH )
+    rocket.x = HALFW
+    rocket.y = HALFH+364
+    rocket.class = "rocket"
+    rocket.hapticCooldown = HAPTIC_COOLDOWN
+    foreground:insert(rocket)
+
+    flame = updateFlame(foreground, HALFW, HALFH+ 445, frameNumber)
+
     -- dont know why its radius *2 but it works
     bubble = display.newImageRect( "assets/bubble-full.png", BUBBLE_RADIUS*2, BUBBLE_RADIUS*2 )
     bubble.class = "bubble"
-    bubble.x = halfW
-    bubble.y = halfH+300
-    
+    -- so symetrical levels require movement
+    bubble.x = HALFW + 80
+    bubble.y = HALFH  +300
+    bubble.alpha = 0.85
+    foreground:insert(bubble)
+
     -- invisible bubbleTarget that the bubble follows
-    bubbleTarget = display.newCircle(halfW, halfH+300, 5)
+    bubbleTarget = display.newCircle(HALFW +80, HALFH+300, 5)
     bubbleTarget:setFillColor(255,0,0,1);
     bubbleTarget.isVisible = DEBUG
+    front:insert(bubbleTarget)
 
+    --background Elements
+    backgroundStart(nearBackground, farBackground, MARGINY)
 
     if DEBUG then
         physics.setDrawMode("hybrid")
-        local c = display.newCircle(halfW, halfH, 5)
+        local c = display.newCircle(HALFW, HALFH, 5)
         c:setFillColor(1,0,0)
 
         -- actualContent
-        local o = display.newRect(halfW,halfH,display.actualContentWidth, display.actualContentHeight)
+        local o = display.newRect(HALFW,HALFH,SCREENW,SCREENH)
         o:setFillColor(0,0,0,0)
         o:setStrokeColor(1,0,0)
         o.strokeWidth = 10
 
         --content
-        local o = display.newRect(halfW,halfH,display.contentWidth, display.contentHeight)
+        local o = display.newRect(HALFW,HALFH,CONTENTW, CONTENTH)
         o:setFillColor(0,0,0,0)
         o:setStrokeColor(0,1,0)
         o.strokeWidth = 10
 
         --viewableContent
-        local o = display.newRect(halfW,halfH,display.safeActualContentWidth, display.safeActualContentHeight)
+        local o = display.newRect(HALFW,HALFH,display.safeActualContentWidth, display.safeActualContentHeight)
         o:setFillColor(0,0,0,0)
         o:setStrokeColor(0,0,1)
         o.strokeWidth = 10
     end
     
     -- Add physics 
-    physics.addBody( balloon, "static", {density=0.1, friction=0.5, bounce=0, radius=BALLOON_RADIUS} )
-    physics.addBody( bubble, "dynamic", {density=BUBBLE_WEIGHT, friction=0.5, bounce=0, radius=BUBBLE_RADIUS} )
+    local rocketShape = {{ -2,  -94,  24,  -66,  42,  -28},
+    { -2,  -94,  42,  -28,  47,   12},
+    { 47,   12,  67,   44,  68,   85},
+    { -2,  -94,  47,   12,  68,   85},
+    { -2,  -94,  68,   85,  37,   69},
+    { -2,  -94,  37,   69,  22,  100},
+    { -2,  -94,  22,  100,   1,  134},
+    { -2,  -94,   1,  134, -21,  103},
+    { -2,  -94, -21,  103, -36,   71},
+    { -2,  -94, -36,   71, -66,   88},
+    {-66,   88, -68,   48, -47,    4},
+    { -2,  -94, -66,   88, -47,    4},
+    { -2,  -94, -47,    4, -43,  -24},
+    {-43,  -24, -27,  -62,  -2,  -94}}
+    local rocketPhysics = {}
+    for i = 1, #rocketShape do
+        table.insert(rocketPhysics, { shape = rocketShape[i], friction=0.2, bounce=0.2})
+    end
+    physics.addBody(rocket, "static", unpack(rocketPhysics) )
+    physics.addBody( bubble, "dynamic", {density=BUBBLE_WEIGHT, friction=0.2, bounce=0, radius=BUBBLE_RADIUS} )
     bubble.isFixedRotation = true
     bubble.gravityScale = 0
     
     -- Add to scene
-    foreground:insert(balloon)
-    foreground:insert(bubble) 
-    foreground:insert(bubbleTarget)
+    sceneGroup:insert(space)
+    sceneGroup:insert(sky)
+    sceneGroup:insert(farBackground)
+    sceneGroup:insert(nearBackground)
+    sceneGroup:insert(foreground)
+    sceneGroup:insert(front)
 end
 
 
@@ -365,14 +463,27 @@ function scene:show( event )
     local phase = event.phase
     
     if phase == "will" then
-        -- Called when the scene is still off screen and is about to move on screen
     elseif phase == "did" then
-        obstacles = generateNewLevel("2", marginY)
-
-        timer.performWithDelay( 10000, function ()
-            obstacles = generateNewLevel("1", marginY)
+        local random = math.random(1,7);
+        obstacles = generateNewLevel("2", sceneGroup)
+        levleSpawn = timer.performWithDelay( 10000, function ()
+            local random = math.random(1,7);
+            print(random)
+            obstacles = generateNewLevel(tostring(random), sceneGroup)
         end, -1 )
-        backgroundTimer = timer.performWithDelay(BG_CHANGE_UPDATE_RATE, updateBackground, -1)
+
+        cloudSpawn = timer.performWithDelay(1000, function ()
+            if math.random(1, CLOUD_SPAWN_RATE) == CLOUD_SPAWN_RATE -1 then
+                addCloud(farBackground)
+            end
+        end, -1)
+
+        flameTimer = timer.performWithDelay(50, function ()
+            flame:removeSelf()
+            flame = updateFlame(foreground, HALFW, HALFH+ 454, frameNumber)
+        end, -1)
+        
+
         Runtime:addEventListener("enterFrame", update)
         Runtime:addEventListener("enterFrame", function (event)
             deltaTime = event.time - lastFrameTime
@@ -383,15 +494,10 @@ function scene:show( event )
 end
 
 function scene:hide(event)
+    if event.phase == "will" then
+        --physics.stop()
+    end
     if event.phase == "did" then
-        background:removeSelf()
-        bubble:removeSelf();
-        bubbleTarget:removeSelf()
-        balloon:removeSelf()
-        scoreText:removeSelf()
-        for i = 1, #obstacles do
-            obstacles[i]:removeSelf()
-        end
         for i = #obstacles,1,-1 do
             table.remove(obstacles,i)
         end

@@ -12,6 +12,8 @@ colored obstacle that only interacts with other obatacles and not the plaber bub
 objects with no gravity
 obstacles that shoot towards the balloon
 mode where you move the baloon on the x or both axis to dodge obstacles
+level where plane bombs balloon
+gain one coin per level completed. option to purchase permanent 3x coin rewards
 
 customizations:
 balloon:
