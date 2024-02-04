@@ -1,4 +1,5 @@
 DEBUG = false
+INVINCIBLE = true
 
 HAPTIC_COOLDOWN = 100 --frames (60/fps)  -- actually not sure
 
@@ -35,7 +36,11 @@ OBS_MORE_FRICTION = 0.8
 -- Game
 END_TRANSITION_DURATION = 1000 --ms
 X_BUFFER = 250
-TIME_TO_SPACE = 20000
+TIME_TO_SPACE = 100000 -- ms
+BASE_POINTS_PER_SECOND = 100
+TEKTUR = "assets/fonts/tektur/Tektur-Medium.ttf"
+HANDJET = "assets/fonts/handJet/Handjet-Regular.ttf"
+REM = "assets/fonts/rem/Rem-Regular.ttf"
 
 -- Menu
 MENU_TRANSITION_DURATION = 170 --ms

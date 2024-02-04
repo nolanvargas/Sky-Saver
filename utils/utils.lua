@@ -40,11 +40,23 @@ function ternary ( cond , T , F )
     end
 end
 
+function formatNumber(value, leadingZeros, commasEabled)
+    local output = string.format("%0"..leadingZeros.."d", value)
+    
+    return output
+
+end
+
+function round(num, numDecimalPlaces)
+    local mult = 10^(numDecimalPlaces or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
+
 local function placeHighScore(score,scores)
     if #scores < 10 then table.insert(scores, score)
     else
         table.sort(scores)
-        print(scores[1])
         if score >=  tonumber(scores[1]) then
             table.remove(scores, 1)
             table.insert(scores, score)

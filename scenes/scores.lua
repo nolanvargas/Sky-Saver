@@ -44,18 +44,18 @@ function scene:create( event )
     local scores = readScores()
 
 
-    highScores = display.newText(sceneGroup, "HIGH SCORES", HALFW, 100, native.systemFont, 100)
+    highScores = display.newText(sceneGroup, "HIGH SCORES", HALFW, 100, "assets/fonts/handJet/Handjet-Regular.ttf", 100)
     local y = 250
 
 
     if #scores > 0 then
         for i,s in pairs(scores) do
-            local value = display.newText(sceneGroup, i ..": ........ " .. scores[(#scores+1)-i] .. "           ", HALFW, y, native.systemFont, 50, "left" )
+            local value = display.newText(sceneGroup, i ..": ........ " .. scores[(#scores+1)-i] .. "           ", HALFW, y, "assets/fonts/handJet/Handjet-Regular.ttf", 50, "left" )
             table.insert(scoreDisplays, value)
             y = y + (SCREENH/22)
         end
     else
-        noScores = display.newText(sceneGroup, "No scores yet", HALFW, 200, native.systemFont, 50)
+        noScores = display.newText(sceneGroup, "No scores yet", HALFW, 200, "assets/fonts/handJet/Handjet-Regular.ttf", 50)
     end
 
     backButton = display.newRoundedRect(sceneGroup, HALFW, HALFH+600, 500, 180, 70 )

@@ -109,7 +109,7 @@ function goToGame()
     transition.to(starGroup, {time=300, y = starGroup.y - SCREENH, transition=easing.inCirc, onComplete=function() 
         transition.to(background, {time=200, alpha = 1, onComplete=function() 
             local clouds = display.newGroup()
-            for i=1, 8 do 
+            for i=1, 7 do 
                 addCloud(clouds)
                 for j=1, clouds.numChildren do
                     clouds[j].y = clouds[j].y + SCREENH*0.7
@@ -215,7 +215,6 @@ end
 
 function changeScene(fromScene, toScene)
     if prevScene == nil then prevScene = fromScene end
-    print("Setting ".. fromScene .." to "..toScene)
     prevScene = fromScene
     currentScene = toScene
 
@@ -531,7 +530,7 @@ local function newMenu()
         text = currency,
         x = coin.x + 275,
         y = coin.y,
-        font = native.systemFont,
+        font = "assets/fonts/tektur/Tektur-Medium.ttf",
         fontSize = 52,
         width = 400,
         align = "left"
@@ -622,7 +621,7 @@ local function newSettings()
         text = "Vibration",
         x = x,
         y = y,
-        font = native.systemFont,
+        font = "assets/fonts/tektur/Tektur-Medium.ttf",
         fontSize = 48,
     }
     local vibrationLabel = display.newText( options1 )
@@ -642,6 +641,29 @@ local function newGameModes()
     local x, y
     x, y = unpack(osc(HALFW, MARGINY + 375, {"down"}))
     local standard = display.newRoundedRect(gameModeTilesBackground, x, y, CONTENTW-100, 400, 30)
+    standard:setFillColor(61/255, 61/255, 61/255)
+    standard:setStrokeColor(230/255, 230/255, 230/255)
+    standard.strokeWidth = 10
+
+    x, y = unpack(osc(HALFW - 120, MARGINY + 500, {"down"}))
+    local options1 = 
+    {
+        parent = gameModeTiles,
+        text = "Classic",
+        x = x,
+        y = y,
+        font = TEKTUR,
+        fontSize = 72,
+        width = 400,
+        align = "left"
+    }
+    local standardText = display.newText(options1)
+
+    x, y = unpack(osc(HALFW, MARGINY + 800, {"down"}))
+    local standard = display.newRoundedRect(gameModeTilesBackground, x, y, CONTENTW-100, 400, 30)
+    standard:setFillColor(40/255, 78/255, 80/255)
+    standard:setStrokeColor(88/255, 204/255, 207/255)
+    standard.strokeWidth = 10
 
 
 end

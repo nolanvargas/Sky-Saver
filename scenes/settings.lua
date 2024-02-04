@@ -96,21 +96,21 @@
 --     confirmBox.strokeWidth = 7
 --     confirmBox:setStrokeColor(.5,.5,.5)
 
---     confirmPrompt = display.newText("Are you sure you want to reset all scores?", HALFW, HALFH-150, HALFW*1.5, 0, native.systemFont, 50)
+--     confirmPrompt = display.newText("Are you sure you want to reset all scores?", HALFW, HALFH-150, HALFW*1.5, 0, "assets/fonts/handJet/Handjet-Regular.ttf", 50)
 
 --     confirmButton = display.newRoundedRect( HALFW, HALFH+50, (HALFW*2)-300, 130, 60)
 --     confirmButton:setFillColor(38/255, 68/255, 80/255)
 --     confirmButton.strokeWidth = 7
 --     confirmButton:setStrokeColor(.5,.5,.5)
 
---     confirmText = display.newText("Yes", HALFW, HALFH+50, native.systemFont, 50)
+--     confirmText = display.newText("Yes", HALFW, HALFH+50, "assets/fonts/handJet/Handjet-Regular.ttf", 50)
 
 --     cancelButton = display.newRoundedRect( HALFW, HALFH+200, (HALFW*2)-300, 130, 60)
 --     cancelButton:setFillColor(255/255, 68/255, 80/255)
 --     cancelButton.strokeWidth = 7
 --     cancelButton:setStrokeColor(.5,.5,.5)
 
---     cancelText = display.newText("Cancel", HALFW, HALFH+200, native.systemFont, 50)
+--     cancelText = display.newText("Cancel", HALFW, HALFH+200, "assets/fonts/handJet/Handjet-Regular.ttf", 50)
 
 --     confirmButton:addEventListener("tap", resetScores)
 --     confirmButton:addEventListener("tap", clearResetConfirmation)
@@ -179,14 +179,14 @@
 --     resetScoresButton.strokeWidth = 7
 --     resetScoresButton:setStrokeColor( .5,.5,.5 )
 
---     resetText = display.newText( sceneGroup,"RESET SCORES",HALFW,HALFH,native.systemFont, 40 )
+--     resetText = display.newText( sceneGroup,"RESET SCORES",HALFW,HALFH,"assets/fonts/handJet/Handjet-Regular.ttf", 40 )
 
 --     mysteryButton = display.newRoundedRect(sceneGroup, HALFW, HALFH+200, 500, 180, 70 )
 --     mysteryButton:setFillColor(38/255, 68/255, 80/255)
 --     mysteryButton.strokeWidth = 7
 --     mysteryButton:setStrokeColor( .5,.5,.5 )
 
---     mysteryButtonText = display.newText(sceneGroup,  "?",HALFW,HALFH+200,native.systemFont, 100 )
+--     mysteryButtonText = display.newText(sceneGroup,  "?",HALFW,HALFH+200,"assets/fonts/handJet/Handjet-Regular.ttf", 100 )
 
 --     backButton = display.newRoundedRect(sceneGroup, HALFW, HALFH+400, 500, 180, 70 )
 --     backButton:setFillColor(38/255, 68/255, 80/255)

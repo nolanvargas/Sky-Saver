@@ -34,6 +34,7 @@ require("utils.utils")
 require("gamelogic.levelGenerator")
 require("gamelogic.backgroundGenerator")
 require("gamelogic.rocket")
+require("utils.performanceMonitor")
 
 
 local scene = composer.newScene()
@@ -54,18 +55,19 @@ local touchPreviousX, touchPreviousY
 local endGameElapsedTime = 0
 local deltaTime
 local lastFrameTime = os.time()
+local inGameTime
 local endGame = false   
 local gameOver = false
 local endGameTimeScale = 1
 local prevFrame
 local score = 0
-local scoreText
+local scoreText, altitudeText
 local playerSettings
 local cloudSpawn, levelSpawn
 local levelNumber = 0
 local flame, flameTimer
 local smoke = {}
-local frameNumber = 0
+local frameCounter = 0
 local starsEnabled = false
 local darkenSky = false
 local cloudsEnabled = true
@@ -119,16 +121,15 @@ local function updateBackground()
 end
 
 local function updateSky()
-    --print(frameNumber)
     if starsEnabled then
         local earthHalf = TIME_TO_SPACE*STAR_SPAWN_AT
         local spaceHalf = TIME_TO_SPACE - TIME_TO_SPACE*STAR_SPAWN_AT 
-        background.alpha = 1 - (frameNumber - earthHalf) / spaceHalf
+        background.alpha = 1 - (inGameTime - earthHalf) / spaceHalf
     end
     if darkenSky then 
         local earthHalf = TIME_TO_SPACE*DARKEN_SKY_AT
         local spaceHalf = TIME_TO_SPACE - TIME_TO_SPACE*DARKEN_SKY_AT 
-        local scalar =  1 - (frameNumber - earthHalf) / spaceHalf
+        local scalar =  1 - (inGameTime - earthHalf) / spaceHalf
         background:setFillColor(backgroundRGB[1]*scalar, backgroundRGB[2]*scalar, backgroundRGB[3]*scalar)
     end
 end
@@ -233,11 +234,13 @@ local function onCollision(event)
     -- check for rocket obj collision
     if ((co[1].class == "rocket") and (co[2].class == "obs") or
     (co[2].class == "rocket") and (co[1].class == "obs")) then
-        if endGame == false then
-                flash() 
-            end
-        timer.cancelAll()
-        endGame = true
+        if not INVINCIBLE then
+            if endGame == false then
+                    flash() 
+                end
+            timer.cancelAll()
+            endGame = true
+        end
     end
 end
 
@@ -293,7 +296,7 @@ end
 local function handleSmoke()
     local smokeElement = spawnSmokeTrail(nearBackground, HALFW, HALFH+450)
     table.insert(smoke, smokeElement)
-    checkSmoke(smoke, endGameTimeScale, frameNumber)
+    checkSmoke(smoke, endGameTimeScale, inGameTime)
 end
 
 local function handleStars()
@@ -309,6 +312,11 @@ local function handleStars()
     end
 end
 
+local function getScore()
+    local score = round(inGameTime / (1000 / BASE_POINTS_PER_SECOND), 0)
+    return score
+end
+
 local function update(event)
     if not gameOver then
         followbubbleTarget() -- Start following the bubbleTarget with delay
@@ -320,20 +328,20 @@ local function update(event)
         handleSmoke()
         handleStars()
         updateSky()
-        frameNumber = frameNumber + 1
 
-        if frameNumber/TIME_TO_SPACE > STAR_SPAWN_AT then
+        frameCounter = frameCounter + 1
+
+        if inGameTime/TIME_TO_SPACE > STAR_SPAWN_AT then
             starsEnabled = true
         end
-        if frameNumber/TIME_TO_SPACE > DARKEN_SKY_AT then
+        if inGameTime/TIME_TO_SPACE > DARKEN_SKY_AT then
             timer.cancel(cloudSpawn)
             darkenSky = true
         end
     end
-    if not endGame then
-        score = score + 0.05
-        scoreText.text = math.floor(score)
-        
+    if not endGame then        
+        score = getScore()
+        scoreText.text = formatNumber(score, 8, true)
     end
     if endGame then
         slowPhysics()
@@ -352,21 +360,57 @@ end
 
 -- create()
 function scene:create( event )    
+    
     local sceneGroup = self.view
     physics.start()
     physics.setTimeScale(1) -- Update physics time scale
     physics.pause()
     playerSettings = getSettings()
-
+    inGameTime = 0
+    
     space = display.newGroup()
     sky = display.newGroup()
     farBackground = display.newGroup()  
     nearBackground = display.newGroup()  --this will overlay 'farBackground'  
     foreground = display.newGroup()  --and this will overlay 'nearBackground'
     front = display.newGroup()
+    
+    local options1 = 
+    {
+        parent = front,
+        text = "ALT: "..math.floor(score).."x10 FT",
+        x = 610,
+        y = SCREENH+MARGINY-15-300,
+        font = HANDJET,
+        fontSize = 130,
+        width = 500,
+        align = "left"
+    }
+    altitudeText = display.newText( options1 )
+    front:insert(altitudeText)
 
-    scoreText = display.newText( math.floor(score), 50, MARGINY +300, native.systemFont, 60 )
+    
+    local scoreBackDrop = display.newRoundedRect( front, 650, MARGINY+50, 250, 60, 10 )
+    scoreBackDrop:setFillColor(0,0,0,0.3)
+
+    local options2 = 
+    {
+        parent = front,
+        text = 00000000,
+        x = 660,
+        y = MARGINY+45,
+        font = REM,
+        fontSize = 48,
+        width = 230,
+        height = 60,
+        align = "left"
+    }
+    scoreText = display.newText( options2 )
+    scoreText.strokeWidth = 10
     front:insert(scoreText)
+
+
+
 
     background = display.newRect(HALFW, HALFH, SCREENW, SCREENH)
     background:setFillColor(backgroundRGB[1], backgroundRGB[2], backgroundRGB[3], 1)
@@ -379,12 +423,12 @@ function scene:create( event )
     rocket.hapticCooldown = HAPTIC_COOLDOWN
     foreground:insert(rocket)
 
-    flame = updateFlame(foreground, HALFW, HALFH+ 445, frameNumber)
+    flame = updateFlame(foreground, HALFW, HALFH+ 445, inGameTime)
 
     -- dont know why its radius *2 but it works
     bubble = display.newImageRect( "assets/bubble-full.png", BUBBLE_RADIUS*2, BUBBLE_RADIUS*2 )
     bubble.class = "bubble"
-    -- so symetrical levels require movement
+    -- so symetrical levels requiren bubble movement
     bubble.x = HALFW + 80
     bubble.y = HALFH  +300
     bubble.alpha = 0.85
@@ -465,11 +509,10 @@ function scene:show( event )
     if phase == "will" then
     elseif phase == "did" then
         local random = math.random(1,7);
-        obstacles = generateNewLevel("2", sceneGroup)
+        obstacles = generateNewLevel("2", foreground)
         levleSpawn = timer.performWithDelay( 10000, function ()
             local random = math.random(1,7);
-            print(random)
-            obstacles = generateNewLevel(tostring(random), sceneGroup)
+            obstacles = generateNewLevel(tostring(random), foreground)
         end, -1 )
 
         cloudSpawn = timer.performWithDelay(1000, function ()
@@ -480,13 +523,20 @@ function scene:show( event )
 
         flameTimer = timer.performWithDelay(50, function ()
             flame:removeSelf()
-            flame = updateFlame(foreground, HALFW, HALFH+ 454, frameNumber)
+            flame = updateFlame(foreground, HALFW, HALFH+ 454, inGameTime)
+        end, -1)
+
+        timer.performWithDelay(1000, function ()
+            logPerformance(inGameTime, frameCounter)
+            frameCounter = 0
         end, -1)
         
 
         Runtime:addEventListener("enterFrame", update)
         Runtime:addEventListener("enterFrame", function (event)
-            deltaTime = event.time - lastFrameTime
+            deltaTime = math.abs(round(event.time - lastFrameTime, 1))
+            if deltaTime > 100000 then deltaTime = 0 end --otherwise deltaTime would be time seince epox
+            inGameTime = inGameTime + deltaTime
             lastFrameTime = event.time
         end)
         physics.start()
