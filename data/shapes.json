@@ -205,5 +205,58 @@
     "display": [0, -250, 215, 125, -215, 125],
     "physics": [0, -185, 215, 185, -215, 185]
   },
-
+  "21": {
+    "name": "20 by 600px plank",
+    "shape": "square",
+    "width": 600,
+    "height": 20
+  },
+  "22": {
+    "name": "20 by 550px plank",
+    "shape": "square",
+    "width": 550,
+    "height": 20
+  },
+  "23": {
+    "name": "20 by 500px plank",
+    "shape": "square",
+    "width": 500,
+    "height": 20
+  },
+  "24": {
+    "name": "20 by 450px plank",
+    "shape": "square",
+    "width": 450,
+    "height": 20
+  },
+  "25": {
+    "name": "20 by 400px plank",
+    "shape": "square",
+    "width": 400,
+    "height": 20
+  },
+  "26": {
+    "name": "20 by 350px plank",
+    "shape": "square",
+    "width": 350,
+    "height": 20
+  },
+  "27": {
+    "name": "20 by 300px plank",
+    "shape": "square",
+    "width": 300,
+    "height": 20
+  },
+  "28": {
+    "name": "20 by 250px plank",
+    "shape": "square",
+    "width": 250,
+    "height": 20
+  },
+  "29": {
+    "name": "20 by 600px plank",
+    "shape": "square",
+    "width": 200,
+    "height": 20
+  }
 }

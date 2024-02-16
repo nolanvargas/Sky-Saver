@@ -1,5 +1,5 @@
 DEBUG = false
-INVINCIBLE = true
+INVINCIBLE = false
 
 HAPTIC_COOLDOWN = 100 --frames (60/fps)  -- actually not sure
 
@@ -38,11 +38,12 @@ END_TRANSITION_DURATION = 1000 --ms
 X_BUFFER = 250
 TIME_TO_SPACE = 100000 -- ms
 BASE_POINTS_PER_SECOND = 100
+CONTINUE_PRICE = 50
+
+-- Menu
 TEKTUR = "assets/fonts/tektur/Tektur-Medium.ttf"
 HANDJET = "assets/fonts/handJet/Handjet-Regular.ttf"
 REM = "assets/fonts/rem/Rem-Regular.ttf"
-
--- Menu
 MENU_TRANSITION_DURATION = 170 --ms
 MENU_STAR_BUFFER = 100
 MANU_TRANSITION_EFFECT = easing.inOutCubic

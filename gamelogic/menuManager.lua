@@ -492,8 +492,8 @@ local function menuBackground()
     rocket = display.newImageRect(backGroup, "assets/rocket.png", 225, 300 )
     flame = display.newImageRect(backGroup, "assets/flame.png", 150, 150)
     physics.addBody( rocket, "dynamic" )
-    rocket.x = math.random(300, 500)
-    rocket.y = math.random(100, 200)
+    rocket.x = math.random(200, 600)
+    rocket.y = math.random(100, 300)
     rocket.rotation = math.random(0,359)
     rocket.gravityScale = 0
     flame.width = 85
@@ -503,6 +503,8 @@ local function menuBackground()
     flame.y = rocket.y + rocket.height / 2  -- Position it at the bottom of the rocket
     flame.x = rocket.x  -- Align it horizontally with the rocket
     local tourqe = ternary(math.random(0,1), math.random(-400, -250), math.random(250, 400))
+    rocket.angularVelocity = 0  
+    rocket:setLinearVelocity( 0, 0)
     rocket:applyTorque( tourqe )
 
 end
@@ -530,7 +532,7 @@ local function newMenu()
         text = currency,
         x = coin.x + 275,
         y = coin.y,
-        font = "assets/fonts/tektur/Tektur-Medium.ttf",
+        font = TEKTUR,
         fontSize = 52,
         width = 400,
         align = "left"

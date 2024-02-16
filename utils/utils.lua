@@ -158,3 +158,61 @@ function getPlayerCurrency()
     return playerData["currency"]
 end
 
+function addCurrency(amount)
+
+    local playerCurrency = getPlayerCurrency()
+
+    local playerData = {}
+    -- Read the contents of the JSON file
+    local filePath = system.pathForFile("data/player.json", system.ResourceDirectory)
+    local file = io.open(filePath, "r")
+    if file then
+        local contents = file:read("*a") -- Read the entire file as a string
+        io.close(file)
+        playerData = json.decode(contents)
+        if not playerData then
+            print("Failed to parse levels JSON")
+        end
+    else
+        print("Levels file not found")
+    end
+
+    playerData["currency"] = playerCurrency + amount
+
+    file = io.open(filePath, "w")
+    if file then
+        file:write( json.encode( playerData ) )
+        io.close(file)
+    end
+
+end
+
+
+function removeCurrency(amount)
+
+    local playerCurrency = getPlayerCurrency()
+
+    local playerData = {}
+    -- Read the contents of the JSON file
+    local filePath = system.pathForFile("data/player.json", system.ResourceDirectory)
+    local file = io.open(filePath, "r")
+    if file then
+        local contents = file:read("*a") -- Read the entire file as a string
+        io.close(file)
+        playerData = json.decode(contents)
+        if not playerData then
+            print("Failed to parse levels JSON")
+        end
+    else
+        print("Levels file not found")
+    end
+
+    playerData["currency"] = playerCurrency - amount
+
+    file = io.open(filePath, "w")
+    if file then
+        file:write( json.encode( playerData ) )
+        io.close(file)
+    end
+
+end

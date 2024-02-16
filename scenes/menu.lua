@@ -3,7 +3,7 @@ local composer = require( "composer" )
 require("utils.constants")
 require("utils.utils")
 require("gamelogic.backgroundGenerator")
-require("scenes.menuManager")
+require("gamelogic.menuManager")
 
 local scene = composer.newScene()
 

@@ -41,7 +41,7 @@ local function newCloud(sceneGroup, offScreen)
     if not offScreen then 
         startingY = math.random(MARGINY, 500)
     else
-        startingY = math.random(MARGINY-300, MARGINY)
+        startingY = math.random(MARGINY-300, MARGINY-100)
     end
 
     local prevX = startingX
