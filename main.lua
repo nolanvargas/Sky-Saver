@@ -1,6 +1,7 @@
 -- import composer
 local composer = require( "composer" )
 local json = require("json")
+local firestore = require("plugin.firestore")
 require("utils.constants")
 
 -- set constants here because they get executed here and not in the constants.lua file
@@ -9,6 +10,9 @@ CONTENTW, CONTENTH = display.contentWidth, display.contentHeight
 MARGINX = (display.contentWidth - display.actualContentWidth) / 2
 MARGINY = (display.contentHeight - display.actualContentHeight) / 2
 
+-- load firestore
+firestore.init()
+firestore.setData("test_collection", tostring(os.time()), {data = "testData"}, function() print("data written") end)
 
 -- preload fonts for faster in-game loading
 local text = {} 

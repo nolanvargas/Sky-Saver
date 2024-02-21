@@ -518,27 +518,7 @@ local function newMenu()
     -- give the settings icon a flag to determine if it should be enabled or not when it transitions to a back button
     settingsIcon.isEnabled = false
 
-    -- currency
-    local currency = getPlayerCurrency()
-    local coin = display.newImageRect(economy, "assets/coin.png", 50, 50 )
-    if MARGINY < 0 then coin.y = MARGINY + 100 else coin.y = 100 end
-    if MARGINX < 0 then coin.x = MARGINX + 100 else coin.x = 100 end
-
-    local seperator = display.newRect(economy, coin.x+50 , coin.y,4, 75)
-            
-    local options1 = 
-    {
-        parent = economy,
-        text = currency,
-        x = coin.x + 275,
-        y = coin.y,
-        font = TEKTUR,
-        fontSize = 52,
-        width = 400,
-        align = "left"
-    }
-    local currencyAmount = display.newText(options1)
-    currencyAmount.align = "left"
+    newCurrencyBox(economy, 100, MARGINY + 100)
 
     playButton = display.newRoundedRect(homeButtonGroup, HALFW, HALFH+100, 500, 150, 75 )
     playButton:setFillColor(54/255, 162/255, 228/255)
@@ -733,5 +713,6 @@ function newHomeScene(sceneGroup)
 
 
 end
+
 
 

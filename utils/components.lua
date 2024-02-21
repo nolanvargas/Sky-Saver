@@ -46,3 +46,27 @@ function toggleSwitch(toggleSwitch, state)
     end
 
 end
+
+function newCurrencyBox(sceneGroup, x, y)
+
+    -- currency
+    local currency = getPlayerCurrency()
+    local coin = display.newImageRect(sceneGroup, "assets/coin.png", 50, 50 )
+    coin.x = x
+    coin.y = y
+    local seperator = display.newRect(sceneGroup, coin.x+50 , coin.y,4, 75)
+                
+    local options1 = 
+    {
+        parent = sceneGroup,
+        text = currency,
+        x = coin.x + 275,
+        y = coin.y,
+        font = TEKTUR,
+        fontSize = 52,
+        width = 400,
+        align = "left"
+    }
+    local currencyAmount = display.newText(options1)
+    currencyAmount.align = "left"
+end

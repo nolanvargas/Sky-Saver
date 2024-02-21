@@ -6,7 +6,7 @@ HAPTIC_COOLDOWN = 100 --frames (60/fps)  -- actually not sure
 -- Rocket
 ROCKET_WIDTH = 190
 ROCKET_HEIGHT = 100 --pixels above bottom of content area
-SMOKE_TRAIL_SPEED = 30 --400
+SMOKE_TRAIL_SPEED = 30
 
 
 -- Bubble
@@ -37,7 +37,7 @@ OBS_MORE_FRICTION = 0.8
 END_TRANSITION_DURATION = 1000 --ms
 X_BUFFER = 250
 TIME_TO_SPACE = 100000 -- ms
-BASE_POINTS_PER_SECOND = 100
+BASE_POINTS_PER_SECOND = 2
 CONTINUE_PRICE = 50
 
 -- Menu

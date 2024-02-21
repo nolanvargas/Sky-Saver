@@ -3,7 +3,9 @@
 -- -------
 
 local composer = require( "composer" )
+local firestore = require("plugin.firestore")
 require("utils.constants")
+require("utils.components")
 require("utils.utils")
 require("gamelogic.levelGenerator")
 require("gamelogic.backgroundGenerator")
@@ -36,6 +38,7 @@ local scoreText, levelText
 local playerSettings
 local cloudSpawn, levelSpawn
 local levelNumber = 1
+local currentLevel
 local flame, flameTimer
 local smoke = {}
 local frameCounter = 0
@@ -48,7 +51,9 @@ local continueWithAdButton, continueWithPayButton
 local isContinueEligible = true
 local continueText, gameOverScore
 local countUpTimer, continueCountdown
+local sessionData = {did_continue = false, first_death_level = 0, first_fatal_level = 0, first_run_time = 0, second_death_level = 0, second_fatal_level = 0, second_run_time = 0, score = 0 }
 
+local gameData = {start_at = 0, second_start_at = 0}
 
 
 
@@ -76,7 +81,7 @@ local updateBackground, updateSky, flash
 local slowPhysics, clearObstacles, obstacleCleanUp, checkObs, updateObs, moveStatics
 local followbubbleTarget, movebubbleTarget
 local onCollision, handleSmoke, handleStars, getScore, pauseTimers, resumeTimers
-local gameOverScreen, postGame, goToHome
+local gameOverScreen, postGame, goToHome, spawnRandomLevel
 
 function goToHome()
     reset()
@@ -90,6 +95,7 @@ function resume()
     endGame = false   
     gameOver = false
     endGameTimeScale = 1
+    gameData["second_start_at"] = os.time()
 end
 
 function clear(sceneGroup)
@@ -254,11 +260,12 @@ function start()
 	bubble.isFixedRotation = true
 	bubble.gravityScale = 0
 
+    
 	local endGameBackdrop = display.newRoundedRect( endGameBubble, HALFW, HALFH-50, CONTENTW-50, SCREENH-500, 50 )
 	endGameBackdrop:setFillColor(51/255, 51/255, 51/255)
 	endGameBackdrop:setStrokeColor(.9,.9,.9)
 	endGameBackdrop.strokeWidth = 15
-
+    
 	
 	
 	continueWithAdButton = display.newRoundedRect(endGameBubble, HALFW, HALFH+100, 500, 150, 20 )
@@ -268,7 +275,7 @@ function start()
 	
 	local options3 = 
 	{
-		parent = endGameBubble,
+        parent = endGameBubble,
 		text = "Free",
 		x = HALFW+40,
 		y = HALFH+101,
@@ -278,6 +285,13 @@ function start()
 	
 	local continueWithPayText = display.newText(options3)
 	
+
+    local currencyBackdrop = display.newRoundedRect( endGameBubble, 190, endGameBackdrop.y - (endGameBackdrop.height / 2) + 75, 270, 75, 20 )
+    currencyBackdrop:setFillColor(.3, .3, .3)
+
+    newCurrencyBox(endGameBubble, 100, endGameBackdrop.y - (endGameBackdrop.height / 2) + 75 )
+
+
 	
 	local continueAdIcon = display.newImageRect(endGameBubble, "assets/ad.png", 60, 60 )
 	continueAdIcon.x = HALFW - 60
@@ -393,7 +407,7 @@ function start()
     
     
 end
-  
+
 function updateBackground()
 
     for i = 1, nearBackground.numChildren do
@@ -478,6 +492,10 @@ function movebubbleTarget(event)
             local changeY = (touchPreviousY - event.y)  * endGameTimeScale
             bubbleTarget.x = bubbleTarget.x - changeX
             bubbleTarget.y = bubbleTarget.y - changeY
+            -- keep bubble target on screen
+            if bubbleTarget.x < BUBBLE_RADIUS then bubbleTarget.x = BUBBLE_RADIUS 
+            elseif bubbleTarget.x > SCREENW - BUBBLE_RADIUS then bubbleTarget.x = SCREENW - BUBBLE_RADIUS end
+            if bubbleTarget.y > SCREENH + MARGINY then bubbleTarget.y = SCREENH + MARGINY end
             touchPreviousX = event.x
             touchPreviousY = event.y
         end
@@ -526,6 +544,16 @@ function onCollision(event)
     (co[2].class == "rocket") and (co[1].class == "obs")) then
         if not INVINCIBLE then
             if endGame == false then
+                if isContinueEligible then
+                    sessionData["first_death_level"] = levelNumber
+                    sessionData["first_fatal_level"] = currentLevel
+                    sessionData["first_run_time"] = math.abs(os.time() - gameData["start_at"])
+                else 
+                    sessionData["second_death_level"] = levelNumber
+                    sessionData["second_fatal_level"] = currentLevel
+                    sessionData["second_run_time"] = math.abs(os.time() - gameData["second_start_at"])
+                    print(gameData["second_start_at"], os.time())
+                end
                 flash() 
                 pauseTimers()
                 endGame = true
@@ -617,21 +645,34 @@ function getScore()
     return score
 end
 
-function countUpScore()
+function countUpScore(event)
+    if event.count == 25 then
+        transition.to(gameOverScore, {time= 500, y = gameOverScore.y - 75, onComplete=function()
+            print('hey')
+            local coin = display.newImageRect(gameOverBubble, "assets/coin.png", 50, 50 )
+            coin.x = HALFW - 50
+            coin.y = gameOverScore.y + 75
+        end})
+    end
 	local scoreText = tonumber(gameOverScore.text)
 	if scoreText < score then
 		scoreText = scoreText + (score*0.05)
 	end
-	if scoreText >= score then scoreText = score end
+	if scoreText >= score then 
+        scoreText = score 
+    end
 	gameOverScore.text = round(scoreText, 0)
 end
 
 function gameOverScreen()
+    sessionData["score"] = score
+    firestore.setData("game_session", tostring(os.time()), sessionData, function() print("data written") end)
+    addCurrency(round(score/10, 0))
     Runtime:removeEventListener("enterFrame", update)
 	endGameBubble:removeSelf()
     gameOverBubble.y = gameOverBubble.y + SCREENH*4
     transition.to(gameOverBubble, {time=400, y = 100, onComplete = function()
-    	countUpTimer = timer.performWithDelay(50, countUpScore, 40)
+    	countUpTimer = timer.performWithDelay(50, countUpScore, 25)
     end})
 
 
@@ -644,6 +685,7 @@ function continue()
     Runtime:addEventListener("enterFrame", update)
     endGameBubble.alpha = 0
     isContinueEligible = false
+    sessionData["did_continue"] = true
     resume()
 end
 
@@ -767,17 +809,21 @@ function create(sceneGroup, new)
 	end
 end
 
-function begin()
+function spawnLevel(level)
+    obstacles = generateNewLevel(tostring(level), foreground)
+    levelNumber = levelNumber + 1
+    levelText.text = "L"..levelNumber
+end
 
-    local random = math.random(1,8);
-    obstacles = generateNewLevel(tostring(random), foreground)
-    levelNumber = 1
-    levelSpawn = timer.performWithDelay( 10000, function ()
-        local random = math.random(1,8);
-        obstacles = generateNewLevel(tostring(random), foreground)
-        levelNumber = levelNumber + 1
-        levelText.text = "L"..levelNumber
-    end, -1 )
+function spawnRandomLevel()
+    currentLevel = math.random(1,8);
+    spawnLevel(currentLevel)
+end
+
+function begin()
+    levelNumber = 0
+    spawnRandomLevel()
+    levelSpawn = timer.performWithDelay( 10000, spawnRandomLevel, -1 )
 
     cloudSpawn = timer.performWithDelay(1000, function ()
         if math.random(1, CLOUD_SPAWN_RATE) == CLOUD_SPAWN_RATE -1 then
@@ -802,6 +848,10 @@ function begin()
     Runtime:addEventListener("touch", movebubbleTarget)
     Runtime:addEventListener("enterFrame", update)
     physics.start()
+    if isContinueEligible then
+        gameData["start_at"] = os.time()
+    end
+
 
 
 end
