@@ -60,7 +60,7 @@ function generateNewLevel(levelNumber, sceneGroup)
         local output
         local type
 
-        if obs["static"] then type = "static" else type = "dynamic" end
+        if obs["static"] then type = "kinematic" else type = "dynamic" end
         if shape["shape"] == "square" then
             output = display.newRect(sceneGroup, obs["x"], obs["y"], shape["width"], shape["height"] )
             physics.addBody( output, type, {density=options[1], friction=options[3], bounce=obs["bounce"]} )
@@ -98,7 +98,10 @@ function generateNewLevel(levelNumber, sceneGroup)
 
         if obs["omega"] then 
             output:applyTorque(obs["omega"]*10) end
-        if obs["gravity"] == false then output.gravity = false else output.gravity = true end
+        if obs["gravity"] == false then 
+            output.gravity = false 
+            output:setFillColor(.4, .4, .4)
+        else output.gravity = true end
         if not obs["activated"] then
             output.activated = false -- not free falling
             output.gravityScale = 0 -- also not free falling

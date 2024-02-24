@@ -51,6 +51,7 @@ local continueWithAdButton, continueWithPayButton
 local isContinueEligible = true
 local continueText, gameOverScore
 local countUpTimer, continueCountdown
+local levelNumbers = {}
 local sessionData = {did_continue = false, first_death_level = 0, first_fatal_level = 0, first_run_time = 0, second_death_level = 0, second_fatal_level = 0, second_run_time = 0, score = 0 }
 
 local gameData = {start_at = 0, second_start_at = 0}
@@ -78,11 +79,14 @@ local gameOverBubble
 
 local start, update, resume, reset, continue, disableContinue
 local updateBackground, updateSky, flash
-local slowPhysics, clearObstacles, obstacleCleanUp, checkObs, updateObs, moveStatics
+local slowPhysics, clearObstacles, obstacleCleanUp, checkObs, updateObs
 local followbubbleTarget, movebubbleTarget
 local onCollision, handleSmoke, handleStars, getScore, pauseTimers, resumeTimers
-local gameOverScreen, postGame, goToHome, spawnRandomLevel
+local gameOverScreen, postGame, goToHome, spawnRandomLevel, loadLevelNumbers
 
+function loadLevelNumbers()
+    for i=1,14 do table.insert(levelNumbers, i) end
+end
 function goToHome()
     reset()
 	composer.gotoScene( "scenes.menu")
@@ -96,6 +100,7 @@ function resume()
     gameOver = false
     endGameTimeScale = 1
     gameData["second_start_at"] = os.time()
+
 end
 
 function clear(sceneGroup)
@@ -286,8 +291,11 @@ function start()
 	local continueWithPayText = display.newText(options3)
 	
 
-    local currencyBackdrop = display.newRoundedRect( endGameBubble, 190, endGameBackdrop.y - (endGameBackdrop.height / 2) + 75, 270, 75, 20 )
+    local currencyBackdrop = display.newRoundedRect( endGameBubble, 60, endGameBackdrop.y - (endGameBackdrop.height / 2) + 75, 270, 75, 20 )
     currencyBackdrop:setFillColor(.3, .3, .3)
+    currencyBackdrop.anchorX = 0
+    local currency = tostring(getPlayerCurrency())
+    currencyBackdrop.width = 125 + #currency * 35
 
     newCurrencyBox(endGameBubble, 100, endGameBackdrop.y - (endGameBackdrop.height / 2) + 75 )
 
@@ -301,6 +309,7 @@ function start()
 	continueWithPayButton:setFillColor(.3, .3, .3)
 	continueWithPayButton.strokeWidth = 10
 	continueWithPayButton.stroke = {0.44, 0.6, 0.8}
+
 	
 	continueWithPayButton:addEventListener("tap", function(event) 
 		if isContinueEligible then
@@ -326,6 +335,13 @@ function start()
 	local continueCoinIcon = display.newImageRect(endGameBubble, "assets/coin.png", 50, 50 )
 	continueCoinIcon.x = HALFW-50
 	continueCoinIcon.y = HALFH-100
+
+    if getPlayerCurrency() < CONTINUE_PRICE then
+        continueWithPayButton.alpha = 0.6
+        continueWithPayText.alpha = 0.6
+        continueCoinIcon.alpha = 0.6
+        
+    end
 	
 	
 	
@@ -493,8 +509,8 @@ function movebubbleTarget(event)
             bubbleTarget.x = bubbleTarget.x - changeX
             bubbleTarget.y = bubbleTarget.y - changeY
             -- keep bubble target on screen
-            if bubbleTarget.x < BUBBLE_RADIUS then bubbleTarget.x = BUBBLE_RADIUS 
-            elseif bubbleTarget.x > SCREENW - BUBBLE_RADIUS then bubbleTarget.x = SCREENW - BUBBLE_RADIUS end
+            if bubbleTarget.x < BUBBLE_RADIUS+MARGINX then bubbleTarget.x = BUBBLE_RADIUS+MARGINX
+            elseif bubbleTarget.x > SCREENW - BUBBLE_RADIUS + MARGINX then bubbleTarget.x = SCREENW - BUBBLE_RADIUS + MARGINX end
             if bubbleTarget.y > SCREENH + MARGINY then bubbleTarget.y = SCREENH + MARGINY end
             touchPreviousX = event.x
             touchPreviousY = event.y
@@ -508,7 +524,6 @@ end
 
 -- Apply forces on collision with obstacles
 function onCollision(event)
-    
     -- collided objects
     local co = { event.object1, event.object2 }
 
@@ -552,7 +567,6 @@ function onCollision(event)
                     sessionData["second_death_level"] = levelNumber
                     sessionData["second_fatal_level"] = currentLevel
                     sessionData["second_run_time"] = math.abs(os.time() - gameData["second_start_at"])
-                    print(gameData["second_start_at"], os.time())
                 end
                 flash() 
                 pauseTimers()
@@ -578,7 +592,7 @@ function obstacleCleanUp()
         local obs = obstacles[i]
         if obs then
             local b = math.max(obs.width, obs.height)
-            if ((obs.x < ((-MARGINX-b)-X_BUFFER)) or (obs.x > SCREENW + b + X_BUFFER) or (obs.y > SCREENH + b)) then
+            if ((obs.x < ((MARGINX-b)-X_BUFFER)) or (obs.x > SCREENW + b + X_BUFFER) or (obs.y > SCREENH + b)) then
                 table.remove(obstacles, i)
                 obs:removeSelf()
             end
@@ -612,15 +626,6 @@ function updateObs()
     end
 end
 
-function moveStatics()
-    for i = 1, #obstacles do
-        local obs = obstacles[i]
-        if obs.bodyType == "static" then
-            obs.y = obs.y + OBS_SLEEP_SPEED/60 * endGameTimeScale
-        end
-    end
-end
-
 function handleSmoke()
     local smokeElement = spawnSmokeTrail(nearBackground, HALFW, HALFH+450)
     table.insert(smoke, smokeElement)
@@ -648,10 +653,21 @@ end
 function countUpScore(event)
     if event.count == 25 then
         transition.to(gameOverScore, {time= 500, y = gameOverScore.y - 75, onComplete=function()
-            print('hey')
-            local coin = display.newImageRect(gameOverBubble, "assets/coin.png", 50, 50 )
-            coin.x = HALFW - 50
-            coin.y = gameOverScore.y + 75
+            local coin = display.newImageRect(gameOverBubble, "assets/coin.png", 70, 70 )
+            coin.x = HALFW - 60
+            coin.y = gameOverScore.y + 100
+            local options3 = 
+            {
+                parent = gameOverBubble,
+                text = "+"..tostring(round(score/10, 0)),
+                x = HALFW+135,
+                y = gameOverScore.y + 100,
+                font = TEKTUR,
+                fontSize = 72,
+                width = 300,
+                align = "left"
+            }
+            local earned = display.newText( options3 ) 
         end})
     end
 	local scoreText = tonumber(gameOverScore.text)
@@ -679,14 +695,16 @@ function gameOverScreen()
 end
 
 function continue()
+    --physics.stop()  --NEED TO RESPAWN BUBBLE 
+    physics.start()
     physics.setTimeScale(1)
     clearObstacles()
     continueWithAdButton:removeEventListener("tap", function() if isContinueEligible then continue() end end)
-    Runtime:addEventListener("enterFrame", update)
     endGameBubble.alpha = 0
     isContinueEligible = false
     sessionData["did_continue"] = true
     resume()
+    Runtime:addEventListener("enterFrame", update)
 end
 
 function disableContinue()
@@ -741,7 +759,6 @@ function update(event)
         checkObs()
         obstacleCleanUp()
         updateObs()
-        moveStatics()
         updateBackground()
         updateSky()
         handleSmoke()
@@ -762,12 +779,14 @@ function update(event)
     end
     if endGame then
         slowPhysics()
+
     end
     if gameOver then
         if isContinueEligible then
             Runtime:removeEventListener("enterFrame", update)
             transition.to(endGameBubble, {time=200, y = 100, onComplete = function()
                 postGame()
+
             end})
         else
             timer.pause(flameTimer)
@@ -816,13 +835,25 @@ function spawnLevel(level)
 end
 
 function spawnRandomLevel()
-    currentLevel = math.random(1,8);
+    if #levelNumbers == 0 then loadLevelNumbers() end
+    local valid = false
+    while not valid do
+        currentLevel = math.random(1,14);
+        for i = 1, #levelNumbers do
+            if levelNumbers[i] == currentLevel then
+                table.remove(levelNumbers, i)
+                valid = true
+            end
+        end
+    end
     spawnLevel(currentLevel)
 end
 
 function begin()
     levelNumber = 0
+    loadLevelNumbers()
     spawnRandomLevel()
+    --spawnLevel(14)
     levelSpawn = timer.performWithDelay( 10000, spawnRandomLevel, -1 )
 
     cloudSpawn = timer.performWithDelay(1000, function ()
@@ -833,7 +864,7 @@ function begin()
 
     flameTimer = timer.performWithDelay(50, function ()
         flame:removeSelf()
-        flame = updateFlame(foreground, HALFW, HALFH+ 454, inGameTime)
+        flame = updateFlame(foreground, HALFW, HALFH+ 453, inGameTime)
     end, -1)
 
     if DEBUG then 

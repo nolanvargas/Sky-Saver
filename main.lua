@@ -12,7 +12,6 @@ MARGINY = (display.contentHeight - display.actualContentHeight) / 2
 
 -- load firestore
 firestore.init()
-firestore.setData("test_collection", tostring(os.time()), {data = "testData"}, function() print("data written") end)
 
 -- preload fonts for faster in-game loading
 local text = {} 
