@@ -24,6 +24,25 @@
           "other_platform_oauth_client": []
         }
       }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:279876804020:android:e51a37bb3094db1d0de6e1",
+        "android_client_info": {
+          "package_name": "com.solar2d.app.firebaseDatabase_demo_master"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-9Uyy101Sa-o_grkLTACfUzxD4pYddEw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
     }
   ],
   "configuration_version": "1"

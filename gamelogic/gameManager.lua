@@ -4,6 +4,7 @@
 
 local composer = require( "composer" )
 local firestore = require("plugin.firestore")
+local vibrator = require("plugin.vibrator")
 require("utils.constants")
 require("utils.components")
 require("utils.utils")
@@ -18,7 +19,7 @@ local physics = require "physics"
 -- -----------------------------------------------------------------------------------
 
 -- game elements
-local bubble, bubbleTarget
+local bubble, bubbleTarget, bubbleSensor
 local obstacles = {}
 local backgroundElements
 local background
@@ -26,6 +27,7 @@ local backgroundRGB = { 0/255, 180/255, 215/255, 1}
 local backgroundTimer
 -- logic
 local touchPreviousX, touchPreviousY
+local bubblePreviousX, bubblePreviousY
 local endGameElapsedTime = 0
 local deltaTime
 local lastFrameTime = os.time()
@@ -45,6 +47,7 @@ local frameCounter = 0
 local starsEnabled = false
 local darkenSky = false
 local cloudsEnabled = true
+local left = false
 local stars = {}
 local continueCountDownTime = 10
 local continueWithAdButton, continueWithPayButton
@@ -55,6 +58,7 @@ local levelNumbers = {}
 local sessionData = {did_continue = false, first_death_level = 0, first_fatal_level = 0, first_run_time = 0, second_death_level = 0, second_fatal_level = 0, second_run_time = 0, score = 0 }
 
 local gameData = {start_at = 0, second_start_at = 0}
+local hasInteracted, tutorial_countdown, touchIcon, tutorialTimer
 
 
 
@@ -85,11 +89,12 @@ local onCollision, handleSmoke, handleStars, getScore, pauseTimers, resumeTimers
 local gameOverScreen, postGame, goToHome, spawnRandomLevel, loadLevelNumbers
 
 function loadLevelNumbers()
-    for i=1,14 do table.insert(levelNumbers, i) end
+    for i=1,20 do table.insert(levelNumbers, i) end
 end
 function goToHome()
     reset()
 	composer.gotoScene( "scenes.menu")
+    left = true
 end
 
 function resume()
@@ -128,6 +133,8 @@ function reset()
 	darkenSky = false
 	continueCountDownTime = 10
 	isContinueEligible = true
+    hasInteracted = false
+    tutorial_countdown = TUTORIAL_SHOW
 	smoke = {}
 	stars = {}
 
@@ -144,8 +151,12 @@ end
 
 function start()
 
+
 	background = display.newRect(sky, HALFW, HALFH, SCREENW, SCREENH)
 	background:setFillColor(backgroundRGB[1], backgroundRGB[2], backgroundRGB[3], 1)
+
+    hasInteracted = false
+    tutorial_countdown = TUTORIAL_SHOW
 
 	local levelBackDrop = display.newRoundedRect( front, 700, MARGINY+120, 150, 60, 10 )
 	levelBackDrop:setFillColor(0,0,0,0.3)
@@ -208,6 +219,13 @@ function start()
 	bubble.alpha = 0.85
 	foreground:insert(bubble)
 
+    bubbleSensor = display.newCircle( foreground, bubble.x, bubble.y, BUBBLE_RADIUS * 1.5 )
+    physics.addBody(bubbleSensor)
+    bubbleSensor.gravityScale = 0
+    bubbleSensor.isSensor = true
+    bubbleSensor.class = "bubbleSensor"
+    bubbleSensor.alpha = 0
+
 	-- invisible bubbleTarget that the bubble follows
 	bubbleTarget = display.newCircle(HALFW +80, HALFH+300, 5)
 	bubbleTarget:setFillColor(255,0,0,1);
@@ -260,7 +278,7 @@ function start()
 	for i = 1, #rocketShape do
 		table.insert(rocketPhysics, { shape = rocketShape[i], friction=0.2, bounce=0.2})
 	end
-	physics.addBody(rocket, "static", unpack(rocketPhysics) )
+	physics.addBody(rocket, "kinematic", unpack(rocketPhysics) )
 	physics.addBody( bubble, "dynamic", {density=BUBBLE_WEIGHT, friction=0.75, bounce=0, radius=BUBBLE_RADIUS} )
 	bubble.isFixedRotation = true
 	bubble.gravityScale = 0
@@ -398,6 +416,7 @@ function start()
 	homeIcon.y = HALFH+100
 
 	restartButton:addEventListener("tap", function() 
+        left = true
         reset()
         create(nil, false)
         removeGameRuntimes()
@@ -502,8 +521,13 @@ function movebubbleTarget(event)
         if touchPreviousX == nil or touchPreviousY == nil or event.phase == "began" then
             touchPreviousX = event.x
             touchPreviousY = event.y
+            bubblePreviousX = bubble.x
+            bubblePreviousY = bubble.y
         end
         if event.phase == "moved" then
+            hasInteracted = true
+            if tutorialTimer then timer.cancel(tutorialTimer) end
+            if touchIcon then touchIcon.alpha = 0 end
             local changeX = (touchPreviousX - event.x) * endGameTimeScale
             local changeY = (touchPreviousY - event.y)  * endGameTimeScale
             bubbleTarget.x = bubbleTarget.x - changeX
@@ -512,51 +536,74 @@ function movebubbleTarget(event)
             if bubbleTarget.x < BUBBLE_RADIUS+MARGINX then bubbleTarget.x = BUBBLE_RADIUS+MARGINX
             elseif bubbleTarget.x > SCREENW - BUBBLE_RADIUS + MARGINX then bubbleTarget.x = SCREENW - BUBBLE_RADIUS + MARGINX end
             if bubbleTarget.y > SCREENH + MARGINY then bubbleTarget.y = SCREENH + MARGINY end
+            local dX = bubble.x - bubblePreviousX
+            local dY = bubble.y - bubblePreviousY
             touchPreviousX = event.x
             touchPreviousY = event.y
+            bubblePreviousX = bubble.x
+            bubblePreviousY = bubble.y
         end
         if (event.phase == "ended" or event.phase == "cancelled") then
-            touchPreviousX, touchPreviousY = nil
+            touchPreviousX, touchPreviousY, bubblePreviousX, bubblePreviousY = nil
         end
         return true
     end
 end
 
 -- Apply forces on collision with obstacles
+--            print(co[1].class, co[2].class)
+
 function onCollision(event)
     -- collided objects
     local co = { event.object1, event.object2 }
+    
+    if co[1].class == "bubbleSensor" and co[2].class == "obs" then
+        if event.phase == "began" then
+            co[2].hapticEligible = true
+        elseif event.phase == "ended" then
+            co[2].hapticEligible = false
+        end
+    end
 
-    if PLAYER_HAPTICS then
-        if co[1].class == "bubble" or co[2].class == "bubble" then
-            if co[1].class == "bubble" then
-                if co[2].hapticCooldown == 0 then
-                    if playerSettings["PLAYER_HAPTICS"] then 
-                        system.vibrate("impact", "light") 
-                        co[2].hapticCooldown = HAPTIC_COOLDOWN
-                    end
+    local s = getSettings()
+    if s["PLAYER_HAPTICS"] then
+        if event.phase == "began" then
+            --print(co[1].class, co[2].class)
+            if co[1].class == "obs" and co[2].class == "bubble" then
+                if co[1].hapticEligible then
+                    vibrator.vibrate(10)
+                    co[1].hapticEligible = false
+                    print("buzz")
                 end
-            elseif co[2].class == "bubble" then
-                if co[1].hapticCooldown == 0 then
-                    if playerSettings["PLAYER_HAPTICS"] then 
-                        system.vibrate("impact", "light") 
-                        co[2].hapticCooldown = HAPTIC_COOLDOWN
-                    end
+            elseif co[1].class == "bubble" and co[2].class == "obs" then
+                if co[2].hapticEligible then
+                    vibrator.vibrate(10)
+                    co[2].hapticEligible = false
+                    print("buzz")
                 end
             end
         end
     end
 
+    local sensor = false
+    if co[1].class == "obs" and co[2].class == "sensor" or co[2].class == "obs" and co[1].class == "sensor" then
+        sensor = true
+    end
     -- activate obstacles
     for _, object in ipairs(co) do
-        if (object.class == "obs") and object.activated == false then
-            activateObject(object)
+        if not sensor then
+            if (object.class == "obs") and object.activated == false then
+                activateObject(object)
+            end
         end
     end
 
     -- check for rocket obj collision
     if ((co[1].class == "rocket") and (co[2].class == "obs") or
     (co[2].class == "rocket") and (co[1].class == "obs")) then
+        left = false
+        if tutorialTimer then timer.cancel(tutorialTimer) end
+
         if not INVINCIBLE then
             if endGame == false then
                 if isContinueEligible then
@@ -604,7 +651,7 @@ function checkObs()
     for i = 1, #obstacles do
         local obs = obstacles[i]
         if obs.activationY then 
-            if obs.y >= obs.activationY and not obs.activated then
+            if obs.y - MARGINY >= obs.activationY and not obs.activated then
                 activateObject(obs)
                 if obs.activationDX or obs.activationDY then
                     obs:applyLinearImpulse(obs.activationDX or 0, obs.activationDY or 0, obs.x, obs.y)
@@ -617,12 +664,17 @@ end
 function updateObs() 
     for i = 1, #obstacles do
         local obs = obstacles[i]
-        if obs.hapticCooldown > 0 then obs.hapticCooldown = obs.hapticCooldown - 1
-        elseif obs.hapticCooldown < 0 then obs.hapticCooldown = 0
+        -- bounce non gravity obs off the top of the screen
+        if not obs.gravity then
+            if obs.onScreen then 
+                local vx, vy = obs:getLinearVelocity()
+                if obs.y <= MARGINY then obs:setLinearVelocity(vx, -(vy/3)) end
+            else
+                if obs.y > MARGINY + math.max(obs.width or 0, obs.height or 0, obs.radius or 0) then
+                    obs.onScreen = true
+                end
+            end
         end
-    end
-    if rocket.hapticCooldown > 0 then rocket.hapticCooldown = rocket.hapticCooldown - 1
-        elseif rocket.hapticCooldown < 0 then rocket.hapticCooldown = 0
     end
 end
 
@@ -653,21 +705,24 @@ end
 function countUpScore(event)
     if event.count == 25 then
         transition.to(gameOverScore, {time= 500, y = gameOverScore.y - 75, onComplete=function()
-            local coin = display.newImageRect(gameOverBubble, "assets/coin.png", 70, 70 )
-            coin.x = HALFW - 60
-            coin.y = gameOverScore.y + 100
-            local options3 = 
-            {
-                parent = gameOverBubble,
-                text = "+"..tostring(round(score/10, 0)),
-                x = HALFW+135,
-                y = gameOverScore.y + 100,
-                font = TEKTUR,
-                fontSize = 72,
-                width = 300,
-                align = "left"
-            }
-            local earned = display.newText( options3 ) 
+            if not left then
+                print("banana")
+                local coin = display.newImageRect(gameOverBubble, "assets/coin.png", 70, 70 )
+                coin.x = HALFW - 60
+                coin.y = gameOverScore.y + 100
+                local options3 = 
+                {
+                    parent = gameOverBubble,
+                    text = "+"..tostring(round(score/10, 0)),
+                    x = HALFW+135,
+                    y = gameOverScore.y + 100,
+                    font = TEKTUR,
+                    fontSize = 72,
+                    width = 300,
+                    align = "left"
+                }
+                local earned = display.newText( options3 )
+            end 
         end})
     end
 	local scoreText = tonumber(gameOverScore.text)
@@ -681,6 +736,7 @@ function countUpScore(event)
 end
 
 function gameOverScreen()
+    physics.stop()
     sessionData["score"] = score
     firestore.setData("game_session", tostring(os.time()), sessionData, function() print("data written") end)
     addCurrency(round(score/10, 0))
@@ -752,6 +808,33 @@ function resumeTimers()
     timer.resume(flameTimer)
 end
 
+function runTutorial()
+    if not tutorialTimer then
+        tutorialTimer = timer.performWithDelay(1500, function()
+            touchIcon = display.newImageRect( "assets/click.png", 150, 150 )
+            touchIcon.alpha = 0
+            touchIcon.x = 500
+            touchIcon.y = HALFH + HALFH / 3
+            transition.to(touchIcon, {time=200, alpha = 1, onComplete = function() 
+                transition.to(touchIcon, {time=1000, x = 300, y = HALFH - HALFH / 3, onComplete = function() 
+                    transition.to(touchIcon, {time=200, alpha = 0, onComplete = function() 
+                        touchIcon:removeSelf()
+                    end})
+                end})
+            end})
+        end, -1)
+    end
+end
+
+function handleTutorial()
+
+    if not hasInteracted then
+        tutorial_countdown = tutorial_countdown - deltaTime
+        if tutorial_countdown <= 0 then runTutorial()
+        end
+    end
+end
+
 function update(event)
     getDeltaTime(event.time)
     if not gameOver then
@@ -763,7 +846,7 @@ function update(event)
         updateSky()
         handleSmoke()
         handleStars()
-
+        handleTutorial()
         if DEBUG then frameCounter = frameCounter + 1 end
         if inGameTime/TIME_TO_SPACE > STAR_SPAWN_AT then
             starsEnabled = true
@@ -772,6 +855,9 @@ function update(event)
             timer.cancel(cloudSpawn)
             darkenSky = true
         end
+
+        bubbleSensor.x = bubble.x
+        bubbleSensor.y = bubble.y
     end
     if not endGame then
         score = getScore()
@@ -826,6 +912,8 @@ function create(sceneGroup, new)
 		sceneGroup:insert(endGameBubble)
 		sceneGroup:insert(gameOverBubble)
 	end
+
+
 end
 
 function spawnLevel(level)
@@ -838,7 +926,7 @@ function spawnRandomLevel()
     if #levelNumbers == 0 then loadLevelNumbers() end
     local valid = false
     while not valid do
-        currentLevel = math.random(1,14);
+        currentLevel = math.random(1,20);
         for i = 1, #levelNumbers do
             if levelNumbers[i] == currentLevel then
                 table.remove(levelNumbers, i)
@@ -853,7 +941,7 @@ function begin()
     levelNumber = 0
     loadLevelNumbers()
     spawnRandomLevel()
-    --spawnLevel(14)
+    --spawnLevel(2)
     levelSpawn = timer.performWithDelay( 10000, spawnRandomLevel, -1 )
 
     cloudSpawn = timer.performWithDelay(1000, function ()

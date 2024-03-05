@@ -2,6 +2,7 @@
 local composer = require( "composer" )
 local json = require("json")
 local firestore = require("plugin.firestore")
+local firebaseAuth = require "plugin.firebaseAuth"
 require("utils.constants")
 
 -- set constants here because they get executed here and not in the constants.lua file
@@ -13,6 +14,20 @@ MARGINY = (display.contentHeight - display.actualContentHeight) / 2
 -- load firestore
 firestore.init()
 
+firebaseAuth.init()
+
+function keyListener( event , params ) 
+    local phase = event.phase 
+    local keyName = event.keyName 
+    -- Let the OS handle the volume buttons 
+    if ( keyName == "volumeUp" ) then 
+        return false 
+    elseif ( keyName == "volumeDown" ) then 
+        return false 
+    end 
+    return false 
+end
+    
 -- preload fonts for faster in-game loading
 local text = {} 
 local font 

@@ -39,6 +39,7 @@ X_BUFFER = 250
 TIME_TO_SPACE = 300000 -- ms
 BASE_POINTS_PER_SECOND = 2
 CONTINUE_PRICE = 50
+TUTORIAL_SHOW = 2000 -- ms
 
 -- Menu
 TEKTUR = "assets/fonts/tektur/Tektur-Medium.ttf"

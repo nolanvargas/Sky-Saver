@@ -3,6 +3,20 @@
 -- https://docs.coronalabs.com/guide/distribution/buildSettings
 --
 
+local spiralcodestudio_patreon_email = 'nolan.vargas44@gmail.com'
+local spiralcodestudio_key = '1d9af0966cedd685'
+
+local function spiralcodestudio_plugin(name)
+	local plugin = {publisherId = 'com.spiralcodestudio', supportedPlatforms = {}}
+	local platforms = {'android', 'appletvos', 'appletvsimulator', 'iphone', 'iphone-sim', 'mac-sim', 'win32-sim'}
+	for i = 1, #platforms do
+		local platform = platforms[i]
+		plugin.supportedPlatforms[platform] = {url = 'https://build.spiralcodestudio.com/' .. spiralcodestudio_patreon_email .. '/' .. spiralcodestudio_key .. '/solar2d/' .. name .. '_' .. platform .. '.tgz'}
+	end
+	return plugin
+end
+
+
 settings =
 {
 	orientation =
@@ -55,6 +69,12 @@ settings =
 			marketplaceId = "8gfyr9",
 		},
 		["plugin.firestore"] =
+		{
+			publisherId="tech.scotth",
+			marketplaceId = "8gfyr9",
+		},
+		['plugin.vibrator'] = spiralcodestudio_plugin('vibrator'),
+		["plugin.firebaseAuth"] =
 		{
 			publisherId="tech.scotth",
 			marketplaceId = "8gfyr9",

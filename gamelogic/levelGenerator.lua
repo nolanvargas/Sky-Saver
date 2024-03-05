@@ -85,7 +85,6 @@ function generateNewLevel(levelNumber, sceneGroup)
         if obs["rotation"] then output.rotation = obs["rotation"] end
 
         -- add properties to the object
-        output.hapticCooldown = HAPTIC_COOLDOWN
         output.omega = obs["omega"]
         output.activationY = obs["activationY"]
         output.activationOmega = obs["activationOmega"]
@@ -93,6 +92,7 @@ function generateNewLevel(levelNumber, sceneGroup)
         output.isFixedRotation = obs["fixedRotation"]
         output.activationDX = obs["activationDX"]
         output.activationDY = obs["activationDY"]
+        output.hapticEligible = false
         if obs["static"] then output:setFillColor(0,0,0) end
         if obs["fixedRotation"] then output:setFillColor(.5,.5,.5) end
 
@@ -101,7 +101,10 @@ function generateNewLevel(levelNumber, sceneGroup)
         if obs["gravity"] == false then 
             output.gravity = false 
             output:setFillColor(.4, .4, .4)
-        else output.gravity = true end
+            output.onScreen = false
+        else 
+            output.gravity = true 
+        end
         if not obs["activated"] then
             output.activated = false -- not free falling
             output.gravityScale = 0 -- also not free falling

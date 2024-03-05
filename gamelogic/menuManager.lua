@@ -2,6 +2,8 @@ require("utils.constants")
 require("utils.utils")
 require("utils.components")
 require("gamelogic.backgroundGenerator")
+local firebaseAuth = require "plugin.firebaseAuth"
+
 local composer = require( "composer" )
 --
 --
@@ -413,19 +415,6 @@ local function update()
         moveRocket = false
         touchInBounds = false 
     end
-
-    --update flame
-    flame.rotation = rocket.rotation
-    flame.y = rocket.y + fY * 100 * -1.42
-    flame.x = rocket.x + fX * 100 * -1.42
-    flame.alpha = (moveRocket) and 1 or 0  -- Set alpha based
-
-    --wrap ship
-    if rocket.x > SCREENW + 150 then rocket.x = -MARGINX - 150
-    elseif rocket.x < MARGINX -150 then rocket.x = SCREENW + 150
-    elseif rocket.y > SCREENH + 100 then rocket.y = MARGINY - 150
-    elseif rocket.y < MARGINY -150 then rocket.y = SCREENH+ 100
-    end
 end
 
 function updateRocket()
@@ -455,6 +444,7 @@ function updateRocket()
     elseif rocket.y > SCREENH + 100 then rocket.y = MARGINY - 150
     elseif rocket.y < MARGINY -150 then rocket.y = SCREENH+ 100
     end
+
 end
 
 function globalTouchEvent(event)
@@ -506,6 +496,7 @@ local function menuBackground()
     rocket.angularVelocity = 0  
     rocket:setLinearVelocity( 0, 0)
     rocket:applyTorque( tourqe )
+    print(rocket:getLinearVelocity())
 
 end
 
@@ -530,6 +521,10 @@ local function newMenu()
     playIcon.x = HALFW
     playIcon.y = HALFH + 100
 
+    -- local test = tostring(firebaseAuth.isSignedIn() or "nill") .. tostring(firebaseAuth.isEmailVerified() or "nill") tostring(firebaseAuth.getUID() or "nill")
+    
+    -- local stuff = {text = test, x = HALFW, y = HALFH}
+    -- display.newText(stuff)
 
     gameModesButton = display.newRoundedRect(homeButtonGroup, HALFW, HALFH+300, 500, 150, 75 )
     gameModesButton:setFillColor(54/255, 162/255, 228/255)
