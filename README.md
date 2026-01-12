@@ -2,7 +2,8 @@
 
 Sky Saver was a mobile game built using Solar2D framework for iOS/Android, based on existing games I used to play on my phone.
 
-![Demo](demo.gif)
+<img src="demo.gif" width="300" />
+
 I stopped working on this in 2024 due to the lack of support for the Solar2D framework.
 
 **Mobile Game Development**
